@@ -12,9 +12,11 @@
 from __future__ import print_function, absolute_import
 
 from AppKit import NSPasteboard
-from Foundation import NSData
+from Cocoa import NSData
+import logging
 
 from workflow.util import run_trigger
+log = logging.getLogger(__name__)
 
 # Some common UTIs
 UTI_HTML = 'public.html'
@@ -43,11 +45,11 @@ $.CGEventPost($.kCGAnnotatedSessionEventTap, pasteCommandUp);
 
 def nsdata(s):
     """Return an NSData instance for string `s`."""
-    if isinstance(s, unicode):
-        s = s.encode('utf-8')
+    if isinstance(s, str):
+         s = s.encode('utf-8')
     else:
         s = str(s)
-
+    log.debug ("str s is: %s" % s)
     return NSData.dataWithBytes_length_(s, len(s))
 
 
@@ -66,11 +68,17 @@ def set(contents):
     Each value must be a `unicode` or `str()`-able object.
 
     """
+    for uti in contents:
+        log.debug ("uti: {}, contents: {}".format (uti, contents[uti]))
+        
+    
     pboard = NSPasteboard.generalPasteboard()
     pboard.clearContents()
     for uti in contents:
+        #log.debug ("uti: %s" % uti)
         data = nsdata(contents[uti])
-        pboard.setData_forType_(data, uti.encode('utf-8'))
+        #pboard.setData_forType_(data, uti.encode('utf-8'))
+        pboard.setData_forType_(data, str(uti))
 
 
 def paste():
@@ -78,3 +86,5 @@ def paste():
     run_trigger('paste')
     # This doesn't appear to work on Catalina :(
     # run_jxa(PASTE_SCRIPT)
+
+

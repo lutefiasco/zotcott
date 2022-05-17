@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>net.deanishe.alfred.zothero</string>
+	<string>giovanni-zothero</string>
 	<key>connections</key>
 	<dict>
 		<key>0E02FA87-DF30-4A39-A326-003800342DDF</key>
@@ -668,7 +668,9 @@
 				<key>runningsubtext</key>
 				<string>Loading…</string>
 				<key>script</key>
-				<string>./zh search "$1"</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py search "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -678,7 +680,7 @@
 				<key>title</key>
 				<string>Search Zotero</string>
 				<key>type</key>
-				<integer>0</integer>
+				<integer>5</integer>
 				<key>withspace</key>
 				<true/>
 			</dict>
@@ -805,7 +807,9 @@ variables={allvars}
 				<key>script</key>
 				<string>flags=()
 test -n "$autopaste" &amp;&amp; flags+=(--paste)
-./zh copy $flags "$citekey"</string>
+export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py copy $flags "$citekey"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -899,7 +903,9 @@ test -n "$autopaste" &amp;&amp; flags+=(--paste)
 				<key>runningsubtext</key>
 				<string>Loading…</string>
 				<key>script</key>
-				<string>./zh fields "$1"</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py fields "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1011,7 +1017,9 @@ variables={allvars}
 				<key>runningsubtext</key>
 				<string></string>
 				<key>script</key>
-				<string>./zh attachments $id "$1"</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py attachments $id "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1262,7 +1270,9 @@ EOS</string>
 				<key>runningsubtext</key>
 				<string></string>
 				<key>script</key>
-				<string>./zh citations "$id" "$1"
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py citations "$id" "$1"
 </string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
@@ -1324,12 +1334,15 @@ EOS</string>
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>flags=()
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+
+flags=()
 
 test -n "$bibliography" &amp;&amp; flags+=(--bibliography)
 test -n "$autopaste" &amp;&amp; flags+=(--paste)
 
-./zh copy $flags "$style" "$id"</string>
+python3 zh.py copy $flags "$style" "$id"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1440,7 +1453,9 @@ variables={allvars}
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>./zh setvar "$varname" "$varval"</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py setvar "$varname" "$varval"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1559,7 +1574,9 @@ test -n "$style" &amp;&amp; {
 	flags+=(--style "$style")
 }
 
-./zh style $flags "$1"
+export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py style $flags "$1"
 </string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
@@ -1609,7 +1626,9 @@ test -n "$style" &amp;&amp; {
 				<key>runningsubtext</key>
 				<string>Loading…</string>
 				<key>script</key>
-				<string>./zh config "$1"</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py config "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1766,7 +1785,9 @@ variables={allvars}
 				<key>runningsubtext</key>
 				<string></string>
 				<key>script</key>
-				<string>./zh locale "$1"</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py locale "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1871,7 +1892,9 @@ variables={allvars}
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>./zh clear</string>
+				<string>export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py clear</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -1918,7 +1941,9 @@ variables={allvars}
 test -n "$notifytitle" &amp;&amp; flags+=(--title "$notifytitle")
 test -n "$notifytext" &amp;&amp; flags+=(--text "$notifytext")
 
-./zh notify $flags</string>
+export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH
+export PYTHONPATH="$PWD/lib"
+python3 zh.py notify $flags</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -2519,7 +2544,7 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 		<key>ATTACHMENTS_DIR</key>
 		<string></string>
 		<key>CITE_STYLE</key>
-		<string></string>
+		<string>http://www.zotero.org/styles/nature</string>
 		<key>COPY_CITEKEY_MOD</key>
 		<string></string>
 		<key>LOCALE</key>
@@ -2533,10 +2558,9 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 		<string>ATTACHMENTS_DIR</string>
 		<string>ZOTERO_DIR</string>
 		<string>COPY_CITEKEY_MOD</string>
-		<string>CITE_STYLE</string>
 	</array>
 	<key>version</key>
-	<string>1.3.0</string>
+	<string>1.99</string>
 	<key>webaddress</key>
 	<string>https://github.com/deanishe/zothero</string>
 </dict>

@@ -240,8 +240,8 @@ class Store(object):
 
         """
         if isinstance(key, str):
-            key = unicode(key, 'utf-8')
-        elif not isinstance(key, unicode):
+            key = str(key)
+        elif not isinstance(key, str):
             raise TypeError(
                 "`key` must be `str` or `unicode`, not `{}`".format(
                     key.__class__.__name__)

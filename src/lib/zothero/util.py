@@ -13,7 +13,8 @@ from __future__ import print_function, absolute_import
 
 from contextlib import contextmanager
 from datetime import date, datetime
-from HTMLParser import HTMLParser
+#from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 import logging
 import os
 from os.path import getmtime
@@ -87,10 +88,12 @@ class HTMLText(HTMLParser):
         """
         p = cls()
         p.feed(html)
-        return unicode(p)
+        return str(p)
+        #return unicode(p)
 
     def __init__(self):
         """Create new HTMLText."""
+        super().__init__()
         self.reset()
         self.data = []
 
@@ -104,7 +107,11 @@ class HTMLText(HTMLParser):
 
     def __str__(self):
         """Return text UTF-8 encoded."""
-        return unicode(self).encode('utf-8', 'replace')
+        if isinstance(self, str):
+            return self
+        #return str(self)
+        #return str(self).encode('utf-8', 'replace')
+        #return unicode(self).encode('utf-8', 'replace')
 
     def __unicode__(self):
         """Return text as Unicode."""
@@ -160,13 +167,15 @@ def unicodify(s, encoding='utf-8'):
         unicode: Decoded Unicode string.
 
     """
-    if isinstance(s, unicode):
+    #if isinstance(s, unicode):
+    if isinstance(s, str):
         return s
 
-    if isinstance(s, str):
-        return s.decode(encoding, 'replace')
+    # if isinstance(s, str):
+    #     return s.decode(encoding, 'replace')
 
-    return unicode(s)
+    return str(s)
+    #return unicode(s)
 
 
 def utf8encode(s):
@@ -174,8 +183,8 @@ def utf8encode(s):
     if isinstance(s, str):
         return s
 
-    if isinstance(s, unicode):
-        return s.encode('utf-8', 'replace')
+    # if isinstance(s, unicode):
+    #     return s.encode('utf-8', 'replace')
 
     return str(s)
 

@@ -158,7 +158,10 @@ class Entry(AttrDict):
             str: UTF8-encoded string.
 
         """
-        return unicode(self).encode('utf-8', 'replace')
+        if isinstance(self, str):
+            return self
+        #return str(self).encode('utf-8', 'replace')
+        #return unicode(self).encode('utf-8', 'replace')
 
     def __unicode__(self):
         """Title, year and author(s) of `Entry`.

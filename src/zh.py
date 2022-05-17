@@ -1,6 +1,5 @@
-#!/usr/bin/python
-# encoding: utf-8
-#
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Copyright (c) 2017 Dean Jackson <deanishe@deanishe.net>
 #
 # MIT Licence. See http://opensource.org/licenses/MIT
@@ -38,7 +37,7 @@ Options:
 
 """
 
-from __future__ import print_function, absolute_import
+# from __future__ import print_function, absolute_import
 
 import os
 from operator import attrgetter
@@ -111,6 +110,8 @@ def do_search(query):
     from zothero.icons import entry_icon
     from zothero.index import COLUMNS
 
+
+    
     style = None
     if CITE_STYLE:
         style = app.styles.get(CITE_STYLE)
@@ -124,9 +125,12 @@ def do_search(query):
 
     # ------------------------------------------------------------------
     # Update index in background if it's out of date
+    
     running = is_running('update')
+    
     if app.stale and not running:
         run_in_background('update', [__file__, 'reindex'])
+        log.debug('RUNNING BACKGROUND')
         running = True
 
     if running:  # Tell Alfred to re-run the workflow
@@ -157,7 +161,7 @@ def do_search(query):
     # ------------------------------------------------------------------
     # Create and send Alfred feedback
     for i, e in enumerate(entries):
-        log.debug(u'%4d. %s', i + 1, e)
+        #log.debug(u'%4d. %s', i + 1, e)
         f = EntryFormatter(e)
         sub = u'{} {}'.format(f.creators, f.year)
         key = u'{}_{}'.format(e.library, e.key)

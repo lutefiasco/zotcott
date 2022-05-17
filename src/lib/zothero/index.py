@@ -17,7 +17,7 @@ import logging
 import os
 import sqlite3
 import struct
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from .util import dt2sqlite, timed, time_since, shortpath
 from .zotero import Entry
@@ -334,7 +334,7 @@ class Index(object):
                          if d.family}
 
                 all_ = [e.title, u' '.join(names), tags, collections,
-                        attachments, notes, e.abstract, unicode(e.year),
+                        attachments, notes, e.abstract, str(e.year),
                         e.date]
 
                 for k, v in e.zdata.items():
@@ -357,7 +357,7 @@ class Index(object):
                 data = [
                     e.id,
                     e.title,
-                    unicode(e.year),
+                    str(e.year),
                     u' '.join([d.family for d in e.creators if d.family]),
                     u' '.join([d.family for d in e.authors if d.family]),
                     u' '.join([d.family for d in e.editors if d.family]),

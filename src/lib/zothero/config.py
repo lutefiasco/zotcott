@@ -9,7 +9,8 @@
 
 """Read Zotero configuration files."""
 
-from ConfigParser import SafeConfigParser
+#from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 import logging
 import os
 import re
@@ -38,7 +39,7 @@ def read():
 
 def find_prefs():
     """Find prefs.js by parsing profiles.ini."""
-    conf = SafeConfigParser()
+    conf = ConfigParser()
     try:
         conf.read(PROFILES)
     except Exception as err:
