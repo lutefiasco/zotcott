@@ -2,6 +2,12 @@
     <img src="./src/icon.png" width="200" height="200">
 </div>
 
+<a href="https://github.com/giovannicoppola/zothero/releases/latest/">
+<img alt="Downloads"
+src="https://img.shields.io/github/downloads/giovannicoppola/zothero/total?color=purple&label=Downloads"><br/>
+</a>
+
+
 ZotHero
 =======
 
