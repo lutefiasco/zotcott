@@ -149,7 +149,7 @@ class ZotHero(object):
         if not self._index:
             from .index import Index
             self._index = Index(os.path.join(self.cachedir, 'search.sqlite'))
-            # self._index.update(self.zotero)
+            self._index.update(self.zotero)
 
         return self._index
 
