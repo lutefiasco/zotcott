@@ -48,7 +48,7 @@ class BetterBibTex(object):
             row = conn.execute(SQL).fetchone()
             data = json.loads(row[0])['data']
             self._refkeys = {
-                unicode(ck['libraryID']) + '_' + ck['itemKey']: ck['citekey']
+                str(ck['libraryID']) + '_' + ck['itemKey']: ck['citekey']
                 for ck in data
             }
         self.exists = True

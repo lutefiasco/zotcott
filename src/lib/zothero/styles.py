@@ -259,7 +259,8 @@ class Styles(object):
                 style.hidden = True
                 self._mtimes.set(style.path, os.path.getmtime(style.path))
                 self.store.set(style.key, style)
-                log.info(u'[styles] loaded "%s"', style.name)
+                log.info(u'[styles] loaded %s', style.name)
+                #log.info(u'[styles] loaded "%s"', style.name)
 
         # --------------------------------------------------------------
         # Purge deleted styles from cache

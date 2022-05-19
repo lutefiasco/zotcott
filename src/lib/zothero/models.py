@@ -303,8 +303,10 @@ class CSLStyle(AttrDict):
 
     def __str__(self):
         """Return UTF-8 representation of style."""
-        return utf8encode(unicode(self))
-
+        if isinstance(self, str):
+            return self
+        
+        
     def __repr__(self):
         """Code-like representation of style."""
         return 'CSLStyle(name={s.name!r}, path={s.path!r})'.format(s=self)

@@ -2100,8 +2100,8 @@ class Workflow(object):
             # This call has to go in the `run` try-except block, as it will
             # initialise `self.settings`, which will raise an exception
             # if `settings.json` isn't valid.
-            if self._update_settings:
-                self.check_update()
+            #if self._update_settings:
+            #    self.check_update()
 
             # Run workflow's entry function/method
             func(self)
