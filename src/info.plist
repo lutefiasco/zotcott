@@ -2553,7 +2553,7 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 			<key>note</key>
 			<string>OneUpdater</string>
 			<key>xpos</key>
-			<integer>470</integer>
+			<integer>355</integer>
 			<key>ypos</key>
 			<integer>475</integer>
 		</dict>
