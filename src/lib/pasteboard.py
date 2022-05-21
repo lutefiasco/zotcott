@@ -12,7 +12,7 @@
 from __future__ import print_function, absolute_import
 
 from AppKit import NSPasteboard
-from Cocoa import NSData
+from Foundation import NSData
 import logging
 
 from workflow.util import run_trigger

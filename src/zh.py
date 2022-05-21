@@ -58,6 +58,8 @@ CITE_STYLE = os.getenv('CITE_STYLE')
 LOCALE = os.getenv('LOCALE')
 COPY_CITEKEY_MOD = os.getenv('COPY_CITEKEY_MOD')
 
+
+
 # Set if workflow was run via Snippet Trigger
 AUTOPASTE = os.getenv('autopaste')
 
@@ -68,7 +70,7 @@ UPDATE_SETTINGS = {
 }
 
 # URLs for help & docs
-URL_ISSUES = 'https://github.com/deanishe/zothero/issues'
+URL_ISSUES = 'https://github.com/giovannicoppola/zothero/issues'
 URL_DOCS = 'https://github.com/deanishe/zothero/blob/master/README.md'
 
 # Workflow icons
@@ -229,6 +231,8 @@ def do_search(query):
             mod = it.add_modifier('shift', 'No attachments', valid=False)
 
         if e.citekey:
+            
+            
             # Override with copy-citekey action given COPY_CITEKEY_MOD
             if COPY_CITEKEY_MOD == '-':
                 it.setvar('action', 'copy-citekey')
@@ -340,7 +344,7 @@ def do_citations(query, entry_id):
 def do_copy(style_key, entry_id, bib_style=False, paste=False):
     """Copy a citation to the pasteboard."""
     from zothero import app
-    import pasteboard as pb
+    #import pasteboard as pb
 
     wf.text_errors = True
 
@@ -354,15 +358,24 @@ def do_copy(style_key, entry_id, bib_style=False, paste=False):
         raise ValueError('Unknown Style: %r' % style_key)
 
     data = app.styles.cite(e, s, bib_style, LOCALE)
+
+    ## Copying to clipboard
+    import subprocess
+    p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+    p.stdin.write(data['rtf'].encode())
+    p.stdin.close()
+ 
     pbdata = {
-        pb.UTI_HTML: data['html'],
-        pb.UTI_PLAIN: data['text'],
-        pb.UTI_TEXT: data['rtf'],
+        #pb.UTI_HTML: data['html'],
+        #pb.UTI_PLAIN: data['text'],
+        #log.debug ("RTF DATA %s" % str(data['rtf']))
+        #pb.UTI_TEXT: data['rtf'],
     }
-    pb.set(pbdata)
+    #pb.set(pbdata)
 
     if paste:
-        pb.paste()
+        from workflow.util import run_trigger
+        run_trigger('paste')
 
 
 def do_config(query):
@@ -647,15 +660,17 @@ def do_citekey(citekey, paste=False):
 
     """
     log.debug('[citekey] key=%r, paste=%r', citekey, paste)
-    import pasteboard as pb
-    pbdata = {
-        pb.UTI_PLAIN: citekey,
-    }
-    pb.set(pbdata)
+    from workflow.util import run_trigger
+    import subprocess
+    p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+    p.stdin.write(citekey.encode())
+    p.stdin.close()
+ 
 
     if paste:
-        pb.paste()
-
+        
+        run_trigger('paste')
+        
 
 def main(wf):
     """Run workflow."""

@@ -33,9 +33,9 @@ class CitationError(Exception):
 def generate(csldata, cslfile, bibliography=False, locale=None):
     """Generate an HTML & RTF citation for ``csldata`` using ``cslfile``."""
     with NamedTemporaryFile(suffix='.json',mode="w+") as fp:
-        log.debug("TESTESTESTE")
-        log.debug(csldata)
-        log.debug(cslfile)
+        
+        #log.debug(csldata)
+        #log.debug(cslfile)
         json.dump(csldata, fp)
         fp.flush()
 

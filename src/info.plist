@@ -2662,11 +2662,11 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 		<key>ATTACHMENTS_DIR</key>
 		<string></string>
 		<key>CITE_STYLE</key>
-		<string>http://www.zotero.org/styles/chicago-fullnote-bibliography</string>
+		<string>http://www.zotero.org/styles/modern-humanities-research-association</string>
 		<key>COPY_CITEKEY_MOD</key>
 		<string></string>
 		<key>LOCALE</key>
-		<string></string>
+		<string>en-US</string>
 		<key>ZOTERO_DIR</key>
 		<string></string>
 	</dict>
@@ -2676,9 +2676,10 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 		<string>ATTACHMENTS_DIR</string>
 		<string>ZOTERO_DIR</string>
 		<string>COPY_CITEKEY_MOD</string>
+		<string>CITE_STYLE</string>
 	</array>
 	<key>version</key>
-	<string>1.99.2</string>
+	<string>1.99.3</string>
 	<key>webaddress</key>
 	<string>https://github.com/deanishe/zothero</string>
 </dict>
