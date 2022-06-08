@@ -192,7 +192,7 @@ class Zotero(object):
         """Return BetterBibTex."""
         if not self._bbt:
             from .betterbibtex import BetterBibTex
-            self._bbt = BetterBibTex(self.datadir)
+            self._bbt = BetterBibTex(self.dbpath)
             if self._bbt.exists:
                 log.debug('[zotero] loaded BetterBibTex data')
 
