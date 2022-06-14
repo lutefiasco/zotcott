@@ -42,6 +42,8 @@ Options:
 import os
 from operator import attrgetter
 import sys
+import json
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
 
@@ -360,18 +362,34 @@ def do_copy(style_key, entry_id, bib_style=False, paste=False):
     data = app.styles.cite(e, s, bib_style, LOCALE)
 
     ## Copying to clipboard
-    import subprocess
-    p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
-    p.stdin.write(data['rtf'].encode())
-    p.stdin.close()
+    # import subprocess
+    # p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+    # p.stdin.write(data['rtf'].encode())
+    # p.stdin.close()
  
-    pbdata = {
-        #pb.UTI_HTML: data['html'],
-        #pb.UTI_PLAIN: data['text'],
-        #log.debug ("RTF DATA %s" % str(data['rtf']))
-        #pb.UTI_TEXT: data['rtf'],
-    }
-    #pb.set(pbdata)
+    # pbdata = {
+    #     pb.UTI_HTML: data['html'],
+    #     pb.UTI_PLAIN: data['text'],
+    #     #log.debug ("RTF DATA %s" % str(data['rtf']))
+    #     pb.UTI_TEXT: data['rtf'],
+    # }
+    # pb.set(pbdata)
+
+        
+
+
+    myVars = {}
+    myVars ["alfredworkflow"] = {"variables": 
+        {"UTI_HTML": data['html'],
+        "UTI_PLAIN": data['text'],
+        "UTI_RTF": data['rtf']}
+        }
+     
+
+    print (json.dumps(myVars))
+    
+
+    
 
     if paste:
         from workflow.util import run_trigger

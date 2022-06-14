@@ -72,13 +72,13 @@ def set(contents):
         log.debug ("uti: {}, contents: {}".format (uti, contents[uti]))
         
     
-    pboard = NSPasteboard.generalPasteboard()
-    pboard.clearContents()
-    for uti in contents:
-        #log.debug ("uti: %s" % uti)
-        data = nsdata(contents[uti])
-        #pboard.setData_forType_(data, uti.encode('utf-8'))
-        pboard.setData_forType_(data, str(uti))
+    # pboard = NSPasteboard.generalPasteboard()
+    # pboard.clearContents()
+    # for uti in contents:
+    #     #log.debug ("uti: %s" % uti)
+    #     data = nsdata(contents[uti])
+    #     #pboard.setData_forType_(data, uti.encode('utf-8'))
+    #     pboard.setData_forType_(data, str(uti))
 
 
 def paste():
