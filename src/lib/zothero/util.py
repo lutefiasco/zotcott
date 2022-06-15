@@ -88,6 +88,8 @@ class HTMLText(HTMLParser):
         """
         p = cls()
         p.feed(html)
+        #log.debug ("=====================")
+        #log.debug (html)
         return str(p)
         #return unicode(p)
 
@@ -105,10 +107,10 @@ class HTMLText(HTMLParser):
         """
         self.data.append(unicodify(s))
 
-    def __str__(self):
-        """Return text UTF-8 encoded."""
-        if isinstance(self, str):
-            return self
+    # def __str__(self):
+    #     """Return text UTF-8 encoded."""
+    #     if isinstance(self, str):
+    #          return self
         #return str(self)
         #return str(self).encode('utf-8', 'replace')
         #return unicode(self).encode('utf-8', 'replace')
