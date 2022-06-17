@@ -382,7 +382,8 @@ def do_copy(style_key, entry_id, bib_style=False, paste=False):
     myVars ["alfredworkflow"] = {"variables": 
         {"UTI_HTML": data['html'],
         "UTI_PLAIN": data['text'],
-        "UTI_RTF": data['rtf']}
+        "UTI_RTF": data['rtf'],
+        "autop2": "True"}
         }
      
 
@@ -391,9 +392,9 @@ def do_copy(style_key, entry_id, bib_style=False, paste=False):
 
     
 
-    if paste:
-        from workflow.util import run_trigger
-        run_trigger('paste')
+    # if paste:
+    #     from workflow.util import run_trigger
+    #     run_trigger('paste')
 
 
 def do_config(query):
@@ -685,9 +686,9 @@ def do_citekey(citekey, paste=False):
     p.stdin.close()
  
 
-    if paste:
+    # if paste:
         
-        run_trigger('paste')
+    #     run_trigger('paste')
         
 
 def main(wf):
