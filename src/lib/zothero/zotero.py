@@ -58,7 +58,8 @@ SELECT  items.itemID AS id,
     LEFT JOIN deletedItems
         ON items.itemID = deletedItems.itemID
 -- Ignore notes and attachments
-WHERE items.itemTypeID not IN (1, 14)
+WHERE itemTypes.typeName not like '%note%'
+AND itemTypes.typeName not like '%attachment%'
 AND deletedItems.dateDeleted IS NULL
 """
 
