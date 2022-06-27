@@ -723,8 +723,6 @@ python3 zh.py search "$1"</string>
 				<string></string>
 				<key>url</key>
 				<string>{var:url}</string>
-				<key>utf8</key>
-				<true/>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.action.openurl</string>
@@ -736,6 +734,8 @@ python3 zh.py search "$1"</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>search</string>
 			</dict>
@@ -770,6 +770,8 @@ python3 zh.py search "$1"</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>paste</string>
 			</dict>
@@ -869,6 +871,8 @@ python3 zh.py copy $flags "$citekey"</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>better-bibtex</string>
 			</dict>
@@ -1085,6 +1089,8 @@ python3 zh.py attachments $id "$1"</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>attachments</string>
 			</dict>
@@ -1354,6 +1360,8 @@ EOS</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>copy-citation</string>
 			</dict>
@@ -1457,6 +1465,8 @@ var UTI_RTF = $.getenv('UTI_RTF');
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>citations</string>
 			</dict>
@@ -1652,6 +1662,8 @@ python3 zh.py setvar "$varname" "$varval"</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>setvar</string>
 			</dict>
@@ -1831,6 +1843,8 @@ python3 zh.py config "$1"</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>config</string>
 			</dict>
@@ -1996,8 +2010,6 @@ python3 zh.py locale "$1"</string>
 				<string></string>
 				<key>url</key>
 				<string>{query}</string>
-				<key>utf8</key>
-				<true/>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.action.openurl</string>
@@ -2121,6 +2133,8 @@ python3 zh.py notify $flags</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>availableviaurlhandler</key>
+				<false/>
 				<key>triggerid</key>
 				<string>notify</string>
 			</dict>
@@ -2719,6 +2733,8 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 			<integer>1065</integer>
 		</dict>
 	</dict>
+	<key>userconfigurationconfig</key>
+	<array/>
 	<key>variables</key>
 	<dict>
 		<key>ATTACHMENTS_DIR</key>
@@ -2739,7 +2755,7 @@ Edit the `ZOTERO_DIR` variable to point to Zotero 5's data directory if you aren
 		<string>ATTACHMENTS_DIR</string>
 	</array>
 	<key>version</key>
-	<string>1.99.5</string>
+	<string>1.99.7</string>
 	<key>webaddress</key>
 	<string>https://github.com/deanishe/zothero</string>
 </dict>
