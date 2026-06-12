@@ -183,7 +183,15 @@ class ZotHero(object):
         """
         if not self._styles:
             from .styles import Styles
-            self._styles = Styles(self.zotero.styles_dir, self.cachedir)
+            # Compute the styles path directly rather than via
+            # self.zotero.styles_dir: instantiating Zotero copies the
+            # (large) Zotero database if it has changed, which the
+            # styles loader doesn't need.
+            styles_dir = os.path.join(self.zotero_dir, 'styles')
+            if not os.path.exists(styles_dir):
+                raise ValueError('styles directory does not exist: %r' %
+                                 styles_dir)
+            self._styles = Styles(styles_dir, self.cachedir)
 
         return self._styles
 
@@ -197,7 +205,22 @@ class ZotHero(object):
             zothero.zotero.Entry: `Entry` for `key` or `None` if not found.
 
         """
-        return self.index.entry(entry_id)
+        # Read straight from the search index without syncing it
+        # against the Zotero database first. Syncing means copying the
+        # Zotero DB if it has changed, which can cost seconds; an entry
+        # being cited was almost always just returned by a search, so
+        # the index already has it. Fall back to a full sync only if
+        # the entry isn't there (e.g. the cache was cleared).
+        if not self._index:
+            from .index import Index
+            self._index = Index(os.path.join(self.cachedir, 'search.sqlite'))
+
+        e = self._index.entry(entry_id)
+        if e is None:
+            self._index.update(self.zotero)
+            e = self._index.entry(entry_id)
+
+        return e
 
     def search(self, query):
         """Search the Zotero database."""
