@@ -633,7 +633,7 @@
 		</array>
 	</dict>
 	<key>createdby</key>
-	<string>Dean Jackson &lt;deanishe@deanishe.net&gt;</string>
+	<string>MNF</string>
 	<key>description</key>
 	<string>Search Zotero</string>
 	<key>disabled</key>
@@ -943,8 +943,6 @@ python3 zh.py fields "$1"</string>
 				<true/>
 				<key>focusedappvariablename</key>
 				<string>autopaste</string>
-				<key>keyword</key>
-				<string>zzcot</string>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.trigger.snippet</string>
