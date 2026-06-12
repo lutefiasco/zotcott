@@ -43,6 +43,7 @@ import os
 from operator import attrgetter
 import sys
 import json
+import time
 
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
@@ -228,19 +229,31 @@ def do_search(query):
         else:
             mod = it.add_modifier('shift', 'No attachments', valid=False)
 
-        if e.citekey:
-            
-            
-            # Override with copy-citekey action given COPY_CITEKEY_MOD
-            if COPY_CITEKEY_MOD == '-':
-                it.setvar('action', 'copy-citekey')
-            elif COPY_CITEKEY_MOD in ['alt', 'cmd', 'ctrl', 'fn', 'shift']:
-                action = 'Paste' if AUTOPASTE else 'Copy'
-                mod = it.add_modifier(COPY_CITEKEY_MOD, action + u' cite-key')
-                mod.setvar('action', 'copy-citekey')
-            elif COPY_CITEKEY_MOD:
-                log.warning('COPY_CITEKEY_MOD should be one of '
-                            '-, alt, cmd, ctrl, fn, shift, or empty')
+        # Check if Better BibTeX is available
+        import zothero
+        bbt_available = zothero.app.zotero.bbt.exists
+        
+        if COPY_CITEKEY_MOD and COPY_CITEKEY_MOD != '':
+            if bbt_available and e.citekey:
+                # Override with copy-citekey action given COPY_CITEKEY_MOD
+                if COPY_CITEKEY_MOD == '-':
+                    it.setvar('action', 'copy-citekey')
+                elif COPY_CITEKEY_MOD in ['alt', 'cmd', 'ctrl', 'fn', 'shift']:
+                    action = 'Paste' if AUTOPASTE else 'Copy'
+                    mod = it.add_modifier(COPY_CITEKEY_MOD, action + u' cite-key')
+                    mod.setvar('action', 'copy-citekey')
+                elif COPY_CITEKEY_MOD:
+                    log.warning('COPY_CITEKEY_MOD should be one of '
+                                '-, alt, cmd, ctrl, fn, shift, or empty')
+            else:
+                # Better BibTeX not available, show message
+                if COPY_CITEKEY_MOD == '-':
+                    it.setvar('action', 'copy-citekey')
+                    it.setvar('citekey', '')  # Empty citekey to trigger fallback
+                elif COPY_CITEKEY_MOD in ['alt', 'cmd', 'ctrl', 'fn', 'shift']:
+                    mod = it.add_modifier(COPY_CITEKEY_MOD, 'Better BibTeX not installed', valid=False)
+                    mod.setvar('action', 'copy-citekey')
+                    mod.setvar('citekey', '')  # Empty citekey to trigger fallback
 
     wf.send_feedback()
 
@@ -342,7 +355,6 @@ def do_citations(query, entry_id):
 def do_copy(style_key, entry_id, bib_style=False, paste=False):
     """Copy a citation to the pasteboard."""
     from zothero import app
-    #import pasteboard as pb
 
     wf.text_errors = True
 
@@ -355,42 +367,70 @@ def do_copy(style_key, entry_id, bib_style=False, paste=False):
     if not s:
         raise ValueError('Unknown Style: %r' % style_key)
 
-    data = app.styles.cite(e, s, bib_style, LOCALE)
+    # Check if this style is known to have page_mangler issues
+    problematic_styles = [
+        'http://www.zotero.org/styles/chicago-notes-bibliography',
+        'http://www.zotero.org/styles/chicago-note-bibliography'
+    ]
+    
+    if s.key in problematic_styles:
+        log.warning('[copy] using known problematic style %s, will try fallback if needed', s.name)
+    
+    try:
+        data = app.styles.cite(e, s, bib_style, LOCALE)
+    except Exception as ce:
+        log.error('[copy] citation generation failed: %s', str(ce))
+        # Check if this is the page_mangler error specifically
+        if 'page_mangler' in str(ce).lower():
+            # Try with fallback styles if the current style fails
+            fallback_styles = [
+                'http://www.zotero.org/styles/apa',
+                'http://www.zotero.org/styles/mla',
+                'http://www.zotero.org/styles/chicago-author-date',
+                'http://www.zotero.org/styles/ieee'
+            ]
+            
+            fallback_succeeded = False
+            for fallback_url in fallback_styles:
+                try:
+                    log.info('[copy] trying fallback style (%s) due to page_mangler error', fallback_url)
+                    fallback_style = app.styles.get(fallback_url)
+                    if fallback_style:
+                        data = app.styles.cite(e, fallback_style, bib_style, LOCALE)
+                        log.info('[copy] fallback style succeeded: %s', fallback_style.name)
+                        # Add a note to the citation data that a fallback was used
+                        data['_fallback_used'] = True
+                        data['_original_style'] = s.name
+                        data['_fallback_style'] = fallback_style.name
+                        fallback_succeeded = True
+                        break
+                except Exception as fallback_error:
+                    log.warning('[copy] fallback style %s also failed: %s', fallback_url, str(fallback_error))
+                    continue
+            
+            if not fallback_succeeded:
+                raise ValueError('Citation generation failed due to CSL engine compatibility issue. The citation style "%s" is not compatible with the current CSL engine. Please try using a different citation style (e.g., APA, MLA, or Chicago Author-Date).' % s.name)
+        elif 'timeout' in str(ce).lower():
+            raise ValueError('Citation generation timed out. This reference may have malformed data. Please check the reference data in Zotero.')
+        else:
+            raise ValueError('Citation generation failed: %s' % str(ce))
 
     ## Copying to clipboard
-    # import subprocess
-    # p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
-    # p.stdin.write(data['rtf'].encode())
-    # p.stdin.close()
- 
-    # pbdata = {
-    #     pb.UTI_HTML: data['html'],
-    #     pb.UTI_PLAIN: data['text'],
-    #     #log.debug ("RTF DATA %s" % str(data['rtf']))
-    #     pb.UTI_TEXT: data['rtf'],
-    # }
-    # pb.set(pbdata)
-
-        
-
-
-    myVars = {}
-    myVars ["alfredworkflow"] = {"variables": 
-        {"UTI_HTML": data['html'],
-        "UTI_PLAIN": data['text'],
-        "UTI_RTF": data['rtf'],
-        "autop2": "True"}
-        }
-     
-
-    print (json.dumps(myVars))
+    # Clear clipboard first to prevent race condition
+    import subprocess
+    subprocess.run(['pbcopy'], input=b'', check=False)
+    time.sleep(0.05)  # Small delay after clearing
     
-
+    # Set clipboard with all formats using pbcopy for plain text
+    # (macOS doesn't support multi-format via pbcopy, so we use plain text)
+    subprocess.run(['pbcopy'], input=data['text'].encode('utf-8'), check=False)
     
-
-    # if paste:
-    #     from workflow.util import run_trigger
-    #     run_trigger('paste')
+    # If paste requested, simulate CMD+V
+    if paste:
+        time.sleep(0.2)  # Wait for clipboard to be set
+        import os
+        # Use osascript to simulate keystroke
+        os.system('osascript -e \'tell application "System Events" to keystroke "v" using command down\'')
 
 
 def do_config(query):
@@ -658,16 +698,34 @@ def do_citekey(citekey, paste=False):
 
     """
     log.debug('[citekey] key=%r, paste=%r', citekey, paste)
+    
+    # Check if Better BibTeX is available
+    import zothero
+    if not zothero.app.zotero.bbt.exists:
+        wf.warn_empty('Better BibTeX not installed', 
+                      'Install the Better BibTeX plugin for Zotero to use citekey functionality')
+        return
+    
+    # Check if citekey is empty (fallback case)
+    if not citekey:
+        wf.warn_empty('Better BibTeX not installed', 
+                      'Install the Better BibTeX plugin for Zotero to use citekey functionality')
+        return
+    
     from workflow.util import run_trigger
     import subprocess
+    
+    # Clear and set clipboard in one atomic operation to avoid race conditions
+    import pasteboard as pb
+    pb.clear()
+    
     p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
     p.stdin.write(citekey.encode())
     p.stdin.close()
  
-
-    # if paste:
-        
-    #     run_trigger('paste')
+    # Handle paste functionality
+    if paste:
+        run_trigger('paste')
         
 
 def main(wf):
