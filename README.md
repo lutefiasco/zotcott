@@ -3,22 +3,18 @@
 </div>
 
 
-ZotHero
+Zotcott
 =======
 
-[Alfred][alfred] workflow for rapidly searching your Zotero database and copying citations.
+Local performance fork of [ZotHero][zothero] — an [Alfred][alfred] workflow for rapidly searching your Zotero database and copying citations.
 
-Original by Dean Jackson ([@deanishe](https://github.com/deanishe))
-
-<a href="https://github.com/giovannicoppola/zothero/releases/latest/">
-<img alt="Downloads"
-src="https://img.shields.io/github/downloads/giovannicoppola/zothero/total?color=purple&label=Downloads"><br/>
-</a>
+ZotHero is by Dean Jackson ([@deanishe](https://github.com/deanishe)), currently maintained by Giovanni Coppola ([@giovannicoppola](https://github.com/giovannicoppola)). Zotcott is a private fork with no upstream ambitions; it installs alongside a live ZotHero without touching it (separate bundle ID, separate keywords, separate caches).
 
 <!-- MarkdownTOC autolink="true" bracket="round" depth="3" autoanchor="true" -->
 
-- [Features](#features)
-- [Download & installation](#download--installation)
+- [What's different from ZotHero](#whats-different-from-zothero)
+- [Requirements](#requirements)
+- [Installation](#installation)
 - [Usage](#usage)
     - [Pasting citations](#pasting-citations)
 - [Configuration](#configuration)
@@ -26,42 +22,57 @@ src="https://img.shields.io/github/downloads/giovannicoppola/zothero/total?color
     - [Citation styles](#citation-styles)
     - [Locales](#locales)
     - [All settings](#all-settings)
-    - [Configuration sheet](#configuration-sheet)
+- [Development notes](#development-notes)
 - [Licence & thanks](#licence--thanks)
 - [Changelog](#changelog)
 
 <!-- /MarkdownTOC -->
 
 
-<a name="features"></a>
-Features
---------
+<a name="whats-different-from-zothero"></a>
+What's different from ZotHero
+-----------------------------
 
-- Perform full-text search across your Zotero database, including only searching specific fields
-- Copy citations using any [CSL][csl] style you have installed in Zotero
-- Copy citations either in citation/note style or bibliography style
-- Copy citations in any [locale supported by CSL](#locales)
-- Copy Better BibTeX citekeys
-- Citations are copied in multiple formats, so the right data are automatically pasted into the application you're using
-- Trigger search while you type using the Snippet Trigger (you must assign the snippet keyword yourself in Alfred Preferences)
+Forked from the ZotHero 2.4 release asset (the v2.3.1/v2.4 git tags point at a stale 2023 commit; the real 2.4 source exists only inside the `.alfredworkflow` release assets, archived in `releases/`).
+
+**Performance** — copying a citation took ~4.5–6s in ZotHero 2.4; Zotcott does it in well under a second:
+
+- **Node citation backend** (`src/lib/cite/cite-node.js`). ZotHero generates citations by running a citeproc-js bundle under JXA (`osascript -l JavaScript`), which costs ~3s per run in Apple JS runtime overhead alone. Zotcott runs the same engine under Node. The JXA program is retained as a fallback when Node is missing, but still embeds the old engine (see below) — Node is the supported backend.
+- **No database sync on the citation path.** ZotHero re-copied its cached `zotero.sqlite` (541MB on the development library) whenever the live database's mtime was newer — nearly always while Zotero is running, adding ~1.5s per copy. Zotcott reads the cited entry from the search index directly and falls back to a full sync only when the entry is missing. The search path keeps its existing freshness machinery unchanged.
+
+**Correctness** — two related fixes (2.4.1):
+
+- **citeproc-js upgraded to 1.4.61.** The engine ZotHero bundles predates CSL 1.0.2 and does not know `page-range-format="chicago-16"`, which the current Chicago styles (17th and 18th ed.) declare. Citing any entry **with a page range** in those styles crashed the engine (`page_mangler is not a function`).
+- **Silent APA fallback removed.** Upstream masked that crash by quietly re-citing in APA (then MLA, Chicago author-date, IEEE) and reporting success — so Chicago citations of paged entries came back as APA with no visible warning. Citation errors now surface as errors.
+
+**Identity** — bundle ID `zotcott`, keywords `zcot` / `zcot:` / `zcotconf` (search / field search / config), default style Chicago Manual of Style 18th edition (notes and bibliography). Alfred keys data and cache directories by bundle ID, so Zotcott and a live ZotHero coexist without interference.
 
 
-<a name="download--installation"></a>
-Download & installation
------------------------
+<a name="requirements"></a>
+Requirements
+------------
 
-Download the `ZotHero-XYZ.alfredworkflow` file from [GitHub releases](https://github.com/giovannicoppola/zothero/releases), and double-click the downloaded file to install.
+- Alfred 5 (Powerpack)
+- Zotero 5+ with locally installed styles
+- **Node** (`brew install node`). Alfred's minimal `PATH` omits Homebrew, so the workflow checks `PATH` and the standard Homebrew locations; set `ZOTCOTT_NODE` in the workflow configuration to point at a non-standard install. Without Node the workflow falls back to the slow JXA citation program, which still has the pre-1.0.2 CSL engine and will fail on modern Chicago styles.
 
-**Note**: Versions 2.0 and later are only compatible with Alfred 5. If you're still using Alfred 4, download [v1.99.7][v1.99.7].
+
+<a name="installation"></a>
+Installation
+------------
+
+Double-click `releases/Zotcott-<version>.alfredworkflow` (built by zipping the contents of `src/`):
+
+```
+cd src && zip -r ../releases/Zotcott-X.Y.Z.alfredworkflow . -x '*__pycache__*' -x '*.pyc'
+```
 
 
 <a name="usage"></a>
 Usage
 -----
 
-These are the workflow's default keywords in Alfred:
-
-- `zot <query>` — Search your Zotero database (common fields).
+- `zcot <query>` — Search your Zotero database (common fields).
     - `↩` — Open the entry in Zotero. (`fn+↩` is an alternate)
     - `⌘↩` — Copy citation to the pasteboard (see [Configuration](#configuration)).
     - `⌥↩` — Copy bibliography-style citation to the pasteboard (see [Configuration](#configuration)).
@@ -71,31 +82,30 @@ These are the workflow's default keywords in Alfred:
         - `↩` or `⌘↩` — Copy citation in selected style.
         - `⌥↩` — Copy bibliography-style citation in selected style.
         - `^↩` — Set style as default.
-    - This search can also be triggered by typing a snippet (which you must first assign yourself in Alfred Preferences)
-    - When the Better-Bibtex plugin for Zotero is installed and `COPY_CITEKEY_MOD` is set to any of `-`(no modifier), `alt`, `ctrl`, `cmd`, `fn`, `shift`, the "Copy citekey" functionality can be enabled to override above operations
+    - When the Better-Bibtex plugin for Zotero is installed and `COPY_CITEKEY_MOD` is set to any of `-` (no modifier), `alt`, `ctrl`, `cmd`, `fn`, `shift`, the "Copy citekey" functionality can be enabled to override the above operations
 
-- `zot:[<query>]` — Search a specific field.
+- `zcot:[<query>]` — Search a specific field.
     - `↩` — Select a field to search against.
-- `zotconf [<query>]` — View and edit workflow configuration.
+- `zcotconf [<query>]` — View and edit workflow configuration.
     - `Default Style: …` — Choose a citation style for the `⌘↩` and `⌥↩` hotkeys (on search results).
     - `Locale: …` — Choose a locale for the formatting of citations. If unset, the default for the style is used, or if none is set, US English.
     - `Reload Zotero Cache` — Clear the workflow's cache of Zotero data. Useful if the workflow gets out of sync with Zotero.
-    - `Open Log File` — Open the workflows log file in the default app (usually Console.app). Useful for checking on indexing problems (the indexer output isn't visible in Alfred's debugger).
-    - `View Documentation` — Open this README in your browser.
-    - `Report an Issue` — Open the GitHub issue tracker in your browser.
+    - `Open Log File` — Open the workflow's log file. Useful for checking on indexing problems (the indexer output isn't visible in Alfred's debugger).
+
+The snippet trigger present in ZotHero was removed from this fork.
 
 
 <a name="pasting-citations"></a>
 ### Pasting citations ###
 
-When you copy a citation, ZotHero puts both HTML and rich text (RTF) representations on the pasteboard. That way, when you paste a citation into an application like Word, the formatted text will be pasted, but when you paste into a text/Markdown document, the HTML will be pasted.
+When you copy a citation, Zotcott puts an HTML representation on the pasteboard, suitable for pasting into text/Markdown documents.
 
 
 <a name="configuration"></a>
 Configuration
 -------------
 
-The workflow reads Zotero's own config files and partly manages its own configuration with the keyword `zotconf`, but you may need to use the [workflow configuration sheet][conf-sheet] if the workflow can't read Zotero's config files.
+The workflow reads Zotero's own config files and partly manages its own configuration with the keyword `zcotconf`, but you may need to use the [workflow configuration sheet][conf-sheet] if the workflow can't read Zotero's config files.
 
 **NOTE:** Unlike its main database, Zotero does not save changes to its configuration until the application closes. As such, if you change Zotero's data or attachment directories, the workflow won't see the changes until you quit Zotero.
 
@@ -119,88 +129,42 @@ The workflow uses the CSL styles you have installed in Zotero, so to add a new s
 
 You can copy either a citation-/note-style citation or a bibliography-style one by hitting `⌘↩` or `⌥↩` respectively on a search result or citation style.
 
-For `⌘↩` and `⌥↩` to work on search results, you must first choose a default style. You can either do this in the configuration screen (keyword `zotconf`), or hitting `^↩` on a search result to show all citation styles, then `^↩` on a style to set that as the default.
+For `⌘↩` and `⌥↩` to work on search results, you must first choose a default style. You can either do this in the configuration screen (keyword `zcotconf`), or hitting `^↩` on a search result to show all citation styles, then `^↩` on a style to set that as the default.
 
 
 <a name="locales"></a>
 ### Locales ###
 
-[CSL][csl] and ZotHero support the following locales. The default behaviour is to use the locale specified in the style if there is one, and `en-US` (American English) if not. Setting a locale overrides the style's own locale.
-
-Use the `zotconf` keyword to force a specific locale.
-
-|                    Locale                    |   Code  |
-|----------------------------------------------|---------|
-| Afrikaans                                    | `af-ZA` |
-| Bahasa Indonesia / Indonesian                | `id-ID` |
-| Català / Catalan                             | `ca-AD` |
-| Cymraeg / Welsh                              | `cy-GB` |
-| Dansk / Danish                               | `da-DK` |
-| Deutsch (Deutschland) / German (Germany)     | `de-DE` |
-| Deutsch (Schweiz) / German (Switzerland)     | `de-CH` |
-| Deutsch (Österreich) / German (Austria)      | `de-AT` |
-| Eesti / Estonian                             | `et-EE` |
-| English (UK)                                 | `en-GB` |
-| English (US)                                 | `en-US` |
-| Español (Chile) / Spanish (Chile)            | `es-CL` |
-| Español (España) / Spanish (Spain)           | `es-ES` |
-| Español (México) / Spanish (Mexico)          | `es-MX` |
-| Euskara / Basque                             | `eu`    |
-| Français (Canada) / French (Canada)          | `fr-CA` |
-| Français (France) / French (France)          | `fr-FR` |
-| Hrvatski / Croatian                          | `hr-HR` |
-| Italiano / Italian                           | `it-IT` |
-| Latviešu / Latvian                           | `lv-LV` |
-| Lietuvių / Lithuanian                        | `lt-LT` |
-| Magyar / Hungarian                           | `hu-HU` |
-| Nederlands / Dutch                           | `nl-NL` |
-| Norsk bokmål / Norwegian (Bokmål)            | `nb-NO` |
-| Norsk nynorsk / Norwegian (Nynorsk)          | `nn-NO` |
-| Polski / Polish                              | `pl-PL` |
-| Português (Brasil) / Portuguese (Brazil)     | `pt-BR` |
-| Português (Portugal) / Portuguese (Portugal) | `pt-PT` |
-| Română / Romanian                            | `ro-RO` |
-| Slovenčina / Slovak                          | `sk-SK` |
-| Slovenščina / Slovenian                      | `sl-SI` |
-| Suomi / Finnish                              | `fi-FI` |
-| Svenska / Swedish                            | `sv-SE` |
-| Tiếng Việt / Vietnamese                      | `vi-VN` |
-| Türkçe / Turkish                             | `tr-TR` |
-| Íslenska / Icelandic                         | `is-IS` |
-| Čeština / Czech                              | `cs-CZ` |
-| Ελληνικά / Greek                             | `el-GR` |
-| Български / Bulgarian                        | `bg-BG` |
-| Монгол / Mongolian                           | `mn-MN` |
-| Русский / Russian                            | `ru-RU` |
-| Српски / Srpski / Serbian                    | `sr-RS` |
-| Українська / Ukrainian                       | `uk-UA` |
-| עברית / Hebrew                               | `he-IL` |
-| العربية / Arabic                             | `ar`    |
-| فارسی / Persian                              | `fa-IR` |
-| ไทย / Thai                                   | `th-TH` |
-| ភាសាខ្មែរ / Khmer                            | `km-KH` |
-| 中文 (中国大陆) / Chinese (PRC)              | `zh-CN` |
-| 中文 (台灣) / Chinese (Taiwan)               | `zh-TW` |
-| 日本語 / Japanese                            | `ja-JP` |
-| 한국어 / Korean                              | `ko-KR` |
+The default behaviour is to use the locale specified in the style if there is one, and `en-US` (American English) if not. Setting a locale overrides the style's own locale. Use the `zcotconf` keyword to force a specific locale; the bundled locale files are in `src/lib/cite/locales/` (the standard CSL locale set, 50+ languages).
 
 
 <a name="all-settings"></a>
 ### All settings ###
 
-Theses are all settings available in the [workflow configuration sheet][conf-sheet].
+These are all settings available in the [workflow configuration sheet][conf-sheet].
 
-You probably shouldn't edit the `CITE_STYLE` or `LOCALE` variables yourself, as there's no guarantee the value you set is actually available. Adjust them using the `zotconf` keyword.
-
+You probably shouldn't edit the `CITE_STYLE` or `LOCALE` variables yourself, as there's no guarantee the value you set is actually available. Adjust them using the `zcotconf` keyword.
 
 |      Variable      |                                 Meaning                                 |
 |--------------------|-------------------------------------------------------------------------|
+| `mainkeyword`      | Search keyword. Default: `zcot` (field search is `<keyword>:`).         |
 | `ATTACHMENTS_DIR`  | Path to your Zotero attachments. Read from Zotero's config by default.  |
-| `CITE_STYLE`       | Citation style copied by `⌘↩` and `⌥↩`                                  |
+| `CITE_STYLE`       | Citation style copied by `⌘↩` and `⌥↩`. Default: Chicago 18 (notes and bibliography). |
 | `LOCALE`           | Locale for citations. Default: `en-US` (US English).                    |
 | `ZOTERO_DIR`       | Path to your Zotero data. Read from Zotero's config by default.         |
 | `COPY_CITEKEY_MOD` | Set to copy Better BibTeX citekey instead of CSL citation/bibliography. |
+| `ZOTCOTT_NODE`     | Path to the `node` executable, if not on `PATH` or in a standard Homebrew location. |
 
+
+<a name="development-notes"></a>
+Development notes
+-----------------
+
+- Source of truth is `src/` on the `zotcott` branch; the installed workflow (Alfred prefs, bundle ID `zotcott`) is deployed by copying changed files or reinstalling the release artifact. If you edit the workflow in Alfred's UI, port the change back to `src/` so they agree.
+- `src/lib/cite/citeproc-bundle.js` is upstream `citeproc.js` (Juris-M, 1.4.61) verbatim plus a marked CommonJS export footer at the bottom — re-apply the footer if you upgrade the bundle.
+- The JXA fallback (`src/lib/cite/cite`) still embeds the old pre-CSL-1.0.2 engine. It is exercised only when Node is missing, and will error (visibly) on styles declaring `page-range-format="chicago-16"`. Upgrading or removing it is an open question.
+- `experiments/` is an untracked sandbox; `experiments/repro-page-mangler.js` is a minimal reproduction of the page-range engine crash, useful for testing future engine upgrades (run it against any bundle and the four `page-range-format` values).
+- The original investigation and state notes live in `RESUME.md`.
 
 
 <a name="licence--thanks"></a>
@@ -209,20 +173,18 @@ Licence & thanks
 
 This workflow is released under the [MIT licence][licence].
 
-It is heavily based on [Alfred-Workflow][aw] (also MIT) for the workflow stuff, and [citeproc-js][citeproc-js] ([AGPL][citeproc-licence]) for generating the citations.
+It is heavily based on [Alfred-Workflow][aw] (also MIT) for the workflow stuff, and [citeproc-js][citeproc-js] v1.4.61 ([AGPL][citeproc-licence]) for generating the citations.
 
-It was inspired by the now-defunct [ZotQuery][zotquery] by [@fractaledmind][smargh].
-
-The [Zorro icon][icon-source] was created by [Dan Lowenstein][lowenstein] from [the Noun Project][noun-project].
+ZotHero was inspired by the now-defunct [ZotQuery][zotquery] by [@fractaledmind][smargh]. The [Zorro icon][icon-source] was created by [Dan Lowenstein][lowenstein] from [the Noun Project][noun-project].
 
 
 <a name="changelog"></a>
 Changelog
 ----------------
 
-- 2023-11-23 Version 2.2: added support for newer BetterBibtex (thanks [@fty1777](https://github.com/fty1777) and [@retorquere](https://github.com/retorquere))
-- 2022-12-15 Version 2.1
-- 2022-11-27 Version 2.0 updated for Alfred 5
+- 2026-06-12 **Zotcott 2.4.1**: citeproc-js upgraded to 1.4.61 — fixes engine crash (`page_mangler`) on entries with page ranges in modern Chicago styles, which upstream had masked by silently substituting APA; the silent fallback is removed and citation errors now surface.
+- 2026-06-12 **Zotcott 2.4**: forked from the ZotHero 2.4 release asset. Node citation backend (~4× faster than JXA); citation path no longer re-copies the Zotero database (~0.7s vs ~4.5–6s per copy overall); bundle ID `zotcott`, keywords `zcot`/`zcot:`/`zcotconf`; default style Chicago 18 (notes and bibliography); snippet trigger removed.
+- Upstream history: see [ZotHero releases][zothero-releases] (2.2: newer BetterBibtex support; 2.1; 2.0: Alfred 5).
 
 [alfred]: https://www.alfredapp.com/
 [aw]: http://www.deanishe.net/alfred-workflow/
@@ -234,7 +196,7 @@ Changelog
 [licence]: ./LICENCE
 [lowenstein]: https://thenounproject.com/danny_mustache
 [noun-project]: https://thenounproject.com
-[releases]: https://github.com/giovannicoppola/zothero/releases
 [smargh]: https://github.com/fractaledmind
 [zotquery]: https://github.com/fractaledmind/alfred_zotquery
-[v1.99.7]: https://github.com/giovannicoppola/zothero/releases/tag/v1.99.7
+[zothero]: https://github.com/giovannicoppola/zothero
+[zothero-releases]: https://github.com/giovannicoppola/zothero/releases
