@@ -944,7 +944,7 @@ python3 zh.py fields "$1"</string>
 				<key>focusedappvariablename</key>
 				<string>autopaste</string>
 				<key>keyword</key>
-				<string>zzot</string>
+				<string>zzcot</string>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.trigger.snippet</string>
@@ -1668,7 +1668,7 @@ python3 zh.py style $flags "$1"
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>keyword</key>
-				<string>zotconf</string>
+				<string>zcotconf</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -2055,7 +2055,7 @@ python3 zh.py notify $flags</string>
 	<string># ZotHero
 
 Search your Zotero database and copy citations.
-`zotconf` to view and edit workflow configuration.
+`zcotconf` to view and edit workflow configuration.
 More details [here](https://github.com/giovannicoppola/zothero)
 
 ## Features
@@ -2090,7 +2090,7 @@ These are the workflow's default keywords in Alfred:
 
 - `zot:[&lt;query&gt;]` — Search a specific field.
     - `↩` — Select a field to search against.
-- `zotconf [&lt;query&gt;]` — View and edit workflow configuration.
+- `zcotconf [&lt;query&gt;]` — View and edit workflow configuration.
     - `Default Style: …` — Choose a citation style for the `⌘↩` and `⌥↩` hotkeys (on search results).
     - `Locale: …` — Choose a locale for the formatting of citations. If unset, the default for the style is used, or if none is set, US English.
     - `Reload Zotero Cache` — Clear the workflow's cache of Zotero data. Useful if the workflow gets out of sync with Zotero.
@@ -2649,7 +2649,7 @@ These are the workflow's default keywords in Alfred:
 			<key>config</key>
 			<dict>
 				<key>default</key>
-				<string>zot</string>
+				<string>zcot</string>
 				<key>placeholder</key>
 				<string></string>
 				<key>required</key>
@@ -2670,7 +2670,7 @@ These are the workflow's default keywords in Alfred:
 			<key>config</key>
 			<dict>
 				<key>default</key>
-				<string>http://www.zotero.org/styles/chicago-author-date</string>
+				<string>http://www.zotero.org/styles/chicago-notes-bibliography</string>
 				<key>placeholder</key>
 				<string></string>
 				<key>required</key>
