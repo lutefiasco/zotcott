@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>giovanni-zothero</string>
+	<string>zotcott</string>
 	<key>connections</key>
 	<dict>
 		<key>0E02FA87-DF30-4A39-A326-003800342DDF</key>
@@ -639,7 +639,7 @@
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>ZotHero</string>
+	<string>Zotcott</string>
 	<key>objects</key>
 	<array>
 		<dict>
