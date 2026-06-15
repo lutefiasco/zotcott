@@ -5,6 +5,21 @@
 
 Zotcott
 =======
+First - an -enormous- thank you to Deanishe and @GiovanniCoppola for years of supporting an Alfred/Zotero workflow that I don't believe either of them used for very long.
+
+All of the code changes are AI, so if that's a deal breaker from you, know this upfront.
+
+Also, the workflow now requires node. I used brew to install node.js, but those sorts of dependencies may not be appropriate to Alfred, so it's not gallery ready/free of additional user work.
+
+Zothero had become slow in copying/pasting citations, and was originally built against very old versions of Zotero, which has changed quite a bit in the last few releases. As I do not use BetterBibTex, I have disabled that portion of the work flow.
+
+Zotcott is a fork designed to speedup citation copy/paste and resolve longstanding legacy bugs in an Alfred workflow to access a Zotero database. 
+
+Just in case anybody might find this useful, and again, with deep thanks to those who have kept versions of this tool alive for many years, I've made it available here.
+
+=========
+Begin AI generated description:
+
 
 Local performance fork of [ZotHero][zothero] — an [Alfred][alfred] workflow for rapidly searching your Zotero database and copying citations.
 
