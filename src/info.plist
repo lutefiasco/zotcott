@@ -2798,7 +2798,7 @@ These are the workflow's default keywords in Alfred:
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>3.0.0</string>
+	<string>3.1.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/giovannicoppola/zothero/</string>
 </dict>

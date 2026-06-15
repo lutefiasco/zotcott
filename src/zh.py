@@ -352,6 +352,49 @@ def do_citations(query, entry_id):
     wf.send_feedback()
 
 
+# JXA helper that writes a citation to the general (cross-app) pasteboard with
+# two flavors at once: the styled RTF and a plain-text rendering derived from
+# that same RTF via NSAttributedString (so it always matches and carries no
+# markup). Uses JXA's built-in ObjC bridge because the Homebrew python3 this
+# workflow runs under has no PyObjC/Cocoa bindings (the prepended Homebrew PATH,
+# added so `node` is found, shadows the system python). osascript ships with
+# macOS, so this needs nothing installed. The RTF is fed in over stdin.
+_SETCLIP_JXA = r'''
+ObjC.import('AppKit')
+ObjC.import('Foundation')
+function run() {
+    var data = $.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile
+    var attr = $.NSAttributedString.alloc.initWithRTFDocumentAttributes(data, $())
+    var pb = $.NSPasteboard.generalPasteboard
+    pb.clearContents
+    pb.declareTypesOwner($([$.NSPasteboardTypeRTF, $.NSPasteboardTypeString]), $())
+    pb.setDataForType(data, $.NSPasteboardTypeRTF)
+    pb.setStringForType(attr.string, $.NSPasteboardTypeString)
+}
+'''
+
+
+def set_clipboard(data):
+    """Put a citation on the pasteboard as styled text plus plain text.
+
+    ``data`` is the dict from ``app.styles.cite`` (keys ``rtf``, ``html``,
+    ``text`` -- note ``text`` is actually HTML). Prefers the RTF flavor so
+    rich-text targets (Word, Pages, Mail, Notes) get real italics, while
+    plain-text targets get clean, tag-free text. If anything in the rich path
+    fails, falls back to a plain ``pbcopy`` so a copy never silently no-ops.
+    """
+    import subprocess
+    rtf = data.get('rtf')
+    if rtf:
+        try:
+            subprocess.run(['osascript', '-l', 'JavaScript', '-e', _SETCLIP_JXA],
+                           input=rtf.encode('utf-8'), check=True)
+            return
+        except Exception as e:  # noqa: BLE001 -- any failure -> plain fallback
+            log.error('[copy] rich clipboard failed, using plain text: %s', e)
+    subprocess.run(['pbcopy'], input=data['text'].encode('utf-8'), check=False)
+
+
 def do_copy(style_key, entry_id, bib_style=False, paste=False):
     """Copy a citation to the pasteboard."""
     from zothero import app
@@ -375,15 +418,11 @@ def do_copy(style_key, entry_id, bib_style=False, paste=False):
             raise ValueError('Citation generation timed out. This reference may have malformed data. Please check the reference data in Zotero.')
         raise ValueError('Citation generation failed: %s' % str(ce))
 
-    ## Copying to clipboard
-    # Clear clipboard first to prevent race condition
-    import subprocess
-    subprocess.run(['pbcopy'], input=b'', check=False)
-    time.sleep(0.05)  # Small delay after clearing
-    
-    # Set clipboard with all formats using pbcopy for plain text
-    # (macOS doesn't support multi-format via pbcopy, so we use plain text)
-    subprocess.run(['pbcopy'], input=data['text'].encode('utf-8'), check=False)
+    ## Copy to the pasteboard with styled (RTF) + plain-text flavors, so
+    ## rich targets (Word, Pages, Mail, Notes) get real italics and plain
+    ## targets get clean text. Replaces the old plain-text-only pbcopy, which
+    ## pasted raw <i> tags because data['text'] is HTML. See set_clipboard.
+    set_clipboard(data)
     
     # If paste requested, simulate CMD+V
     if paste:
