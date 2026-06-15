@@ -161,6 +161,7 @@ tags
 # End of https://www.gitignore.io/api/python,sublimetext,vim
 src/lib/.DS_Store
 
-# Build artifacts & scratch — src/ is source of truth; rebuild zips from it (see RESUME.md)
-releases/*.alfredworkflow
+# Scratch — not part of the release record
 experiments/
+
+# NB releases/*.alfredworkflow ARE tracked from 3.0.0 forward (release history kept in-repo).
