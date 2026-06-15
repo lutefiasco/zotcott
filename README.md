@@ -78,11 +78,11 @@ Usage
     - `⌥↩` — Copy bibliography-style citation to the pasteboard (see [Configuration](#configuration)).
     - `⇧↩` — View entry attachments (if present).
         - `↩` — Open an attachment in the default application.
+        - A linked file that isn't on disk (an orphaned path from another machine, or a cloud file that isn't synced) is shown as a non-actionable "⚠ File not found" item instead of failing silently on open.
     - `^↩` — View all citation styles.
         - `↩` or `⌘↩` — Copy citation in selected style.
         - `⌥↩` — Copy bibliography-style citation in selected style.
         - `^↩` — Set style as default.
-    - When the Better-Bibtex plugin for Zotero is installed and `COPY_CITEKEY_MOD` is set to any of `-` (no modifier), `alt`, `ctrl`, `cmd`, `fn`, `shift`, the "Copy citekey" functionality can be enabled to override the above operations
 
 - `zcot:[<query>]` — Search a specific field.
     - `↩` — Select a field to search against.
@@ -152,7 +152,6 @@ You probably shouldn't edit the `CITE_STYLE` or `LOCALE` variables yourself, as 
 | `CITE_STYLE`       | Citation style copied by `⌘↩` and `⌥↩`. Default: Chicago 18 (notes and bibliography). |
 | `LOCALE`           | Locale for citations. Default: `en-US` (US English).                    |
 | `ZOTERO_DIR`       | Path to your Zotero data. Read from Zotero's config by default.         |
-| `COPY_CITEKEY_MOD` | Set to copy Better BibTeX citekey instead of CSL citation/bibliography. |
 | `ZOTCOTT_NODE`     | Path to the `node` executable, if not on `PATH` or in a standard Homebrew location. |
 
 
@@ -182,6 +181,11 @@ ZotHero was inspired by the now-defunct [ZotQuery][zotquery] by [@fractaledmind]
 Changelog
 ----------------
 
+- **Unreleased** (on `zotcott`, not yet built/installed): modernisation pass for Zotero 8/9 (current library is Zotero 9.0.4, schema 125).
+    - **Hardened attachment resolution.** Profile detection in `config.py` now resolves the active Zotero profile across all `profiles.ini` layouts (an `[Install…]` `Default=` path, a profile flagged `Default=1`, a profile named `default`, or the sole profile) instead of only matching `Name=default` — the old single-line failure mode silently dropped *every* linked attachment. Linked files missing from disk are now surfaced as "⚠ File not found" rather than failing silently on open (`Attachment.exists`).
+    - **Removed the Better BibTeX / citekey subsystem.** Deleted `betterbibtex.py`, the `do_citekey` command, the `COPY_CITEKEY_MOD` search-result branch, and the per-load citekey lookup. The cite-in-place / autopaste path is untouched. (The Alfred-side "Copy Citekey" objects and the `COPY_CITEKEY_MOD` config variable are now inert; remove them via the Alfred workflow editor if desired.)
+    - **Search index migrated FTS3 → FTS5.** Ranking now uses SQLite's built-in `bm25()` with per-column weights, replacing the hand-rolled `matchinfo`/`struct` rank function. The index schema version bumped (8 → 9), so the search cache rebuilds itself on first run.
+    - Added a pytest suite (`src/lib/zothero/tests/`: config, models, zotero, index) covering the above.
 - 2026-06-15 **Zotcott 3.1.0**: rich-text copy. Citations now land on the clipboard with a styled **RTF** flavor *and* a plain-text flavor, so rich-text targets (Word, Pages, Mail, Notes) get real italics while plain-text targets (BBEdit, Terminal) get clean, tag-free text. Previously `do_copy` copied `data['text']` — which is HTML — so italics pasted as literal `<i>…</i>` tags. The styled `rtf` form was already generated on every copy and discarded. Implemented via JXA (`osascript -l JavaScript` → `NSPasteboard`) fed the RTF over stdin, with the plain-text flavor derived from the RTF itself via `NSAttributedString`; no new dependency (the workflow's Homebrew python3 has no PyObjC, but `osascript` ships with macOS). Falls back to plain `pbcopy` if the rich path ever fails.
 - 2026-06-15 **Zotcott 3.0.0**: version-line break — no functional change from 2.4.1. Renumbered to a major Zotcott line so the fork's versions can never collide with upstream ZotHero's (both had reached "2.4"). Inherited `ZotHero*.alfredworkflow` artifacts removed from `releases/`; only `Zotcott-*` builds are kept. Upstream ZotHero releases remain on [GitHub][zothero-releases] if ever needed.
 - 2026-06-12 **Zotcott 2.4.1**: citeproc-js upgraded to 1.4.61 — fixes engine crash (`page_mangler`) on entries with page ranges in modern Chicago styles, which upstream had masked by silently substituting APA; the silent fallback is removed and citation errors now surface.

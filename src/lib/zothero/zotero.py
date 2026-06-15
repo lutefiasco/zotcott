@@ -37,7 +37,6 @@ from .util import (
     shortpath,
     strip_tags,
     sqlite2dt,
-    copyifnewer,
     time_since,
 )
 
@@ -174,20 +173,9 @@ class Zotero(object):
 
         """
         self.datadir = datadir
-        self.WF_CACHE = os.getenv('alfred_workflow_cache')
-        
-        
         self._attachments_dir = attachments_base_dir
         self.dbpath = dbpath or os.path.join(datadir, 'zotero.sqlite')
         self._conn = None
-        self._bbt = None  # BetterBibTex
-        
-        self.originalBib = os.path.join(datadir, 'better-bibtex.sqlite')
-        self.bibpath = os.path.join(self.WF_CACHE, 'better-bibtex.sqlite')
-        
-        
-        
-        
 
     @property
     def conn(self):
@@ -199,24 +187,6 @@ class Zotero(object):
             log.debug('[zotero] opened database %r', shortpath(self.dbpath))
 
         return self._conn
-
-    @property
-    def bbt(self):
-        """Return BetterBibTex."""
-        
-        if not self._bbt:
-            
-            self.bibpath_copy = copyifnewer(self.originalBib, self.bibpath)
-
-
-            from .betterbibtex import BetterBibTex
-            
-            self._bbt = BetterBibTex(self.bibpath_copy)
-            #self._bbt = BetterBibTex(self.dbpath)
-            if self._bbt.exists:
-                log.debug('[zotero] loaded BetterBibTex data')
-
-        return self._bbt
 
     @property
     def last_updated(self):
@@ -339,9 +309,6 @@ class Zotero(object):
         e.creators = self._entry_creators(e.id)
         e.notes = self._entry_notes(e.id)
         e.tags = self._entry_tags(e.id)
-
-        # Better Bibtex citekey
-        e.citekey = self.bbt.citekey('{}_{}'.format(e.library, e.key))
 
         return e
 

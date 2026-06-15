@@ -17,7 +17,6 @@ Usage:
     zh clear
     zh config [<query>]
     zh copy [--bibliography] [--paste] <style> <id>
-    zh copy [--paste] <citekey>
     zh fields [<query>]
     zh locale [<query>]
     zh notify [--title <msg>] [--text <msg>]
@@ -59,7 +58,6 @@ log = None
 CITE_STYLE = os.getenv('CITE_STYLE')
 # User's preferred locale for citations
 LOCALE = os.getenv('LOCALE')
-COPY_CITEKEY_MOD = os.getenv('COPY_CITEKEY_MOD')
 
 
 
@@ -186,7 +184,6 @@ def do_search(query):
 
         it.setvar('action', 'open-in-zotero')
         it.setvar('url', url)
-        it.setvar('citekey', e.citekey)
         it.setvar('id', e.id)
 
         # ------------------------------------------------------------------
@@ -229,32 +226,6 @@ def do_search(query):
         else:
             mod = it.add_modifier('shift', 'No attachments', valid=False)
 
-        # Check if Better BibTeX is available
-        import zothero
-        bbt_available = zothero.app.zotero.bbt.exists
-        
-        if COPY_CITEKEY_MOD and COPY_CITEKEY_MOD != '':
-            if bbt_available and e.citekey:
-                # Override with copy-citekey action given COPY_CITEKEY_MOD
-                if COPY_CITEKEY_MOD == '-':
-                    it.setvar('action', 'copy-citekey')
-                elif COPY_CITEKEY_MOD in ['alt', 'cmd', 'ctrl', 'fn', 'shift']:
-                    action = 'Paste' if AUTOPASTE else 'Copy'
-                    mod = it.add_modifier(COPY_CITEKEY_MOD, action + u' cite-key')
-                    mod.setvar('action', 'copy-citekey')
-                elif COPY_CITEKEY_MOD:
-                    log.warning('COPY_CITEKEY_MOD should be one of '
-                                '-, alt, cmd, ctrl, fn, shift, or empty')
-            else:
-                # Better BibTeX not available, show message
-                if COPY_CITEKEY_MOD == '-':
-                    it.setvar('action', 'copy-citekey')
-                    it.setvar('citekey', '')  # Empty citekey to trigger fallback
-                elif COPY_CITEKEY_MOD in ['alt', 'cmd', 'ctrl', 'fn', 'shift']:
-                    mod = it.add_modifier(COPY_CITEKEY_MOD, 'Better BibTeX not installed', valid=False)
-                    mod.setvar('action', 'copy-citekey')
-                    mod.setvar('citekey', '')  # Empty citekey to trigger fallback
-
     wf.send_feedback()
 
 
@@ -281,7 +252,7 @@ def do_attachments(entry_id, query):
         atts = wf.filter(query, atts, attrgetter('name'))
 
     for att in atts:
-        if att.path:
+        if att.exists:
             wf.add_item(att.name,
                         shortpath(att.path),
                         arg=att.path,
@@ -289,6 +260,15 @@ def do_attachments(entry_id, query):
                         type='file',
                         icontype='fileicon',
                         valid=True)
+        elif att.path:
+            # Linked in Zotero but not on disk right now: an orphaned path
+            # from a previous machine, or a cloud file (Box) that isn't
+            # synced/online. Surface it as a non-actionable warning rather
+            # than a click that silently fails to open anything.
+            wf.add_item(att.name,
+                        u'⚠ File not found: ' + shortpath(att.path),
+                        icon=ICON_WARNING,
+                        valid=False)
         elif att.url:
             wf.add_item(att.name, att.url,
                         arg=att.url,
@@ -688,45 +668,6 @@ def do_notify(title, text):
     notify(title, text)
 
 
-def do_citekey(citekey, paste=False):
-    """Copy Better Bibtext citekey.
-
-    Args:
-        citekey (unicode): Item's Better Bibtex citekey.
-        paste (bool, optional): Paste citekey into active application.
-
-    """
-    log.debug('[citekey] key=%r, paste=%r', citekey, paste)
-    
-    # Check if Better BibTeX is available
-    import zothero
-    if not zothero.app.zotero.bbt.exists:
-        wf.warn_empty('Better BibTeX not installed', 
-                      'Install the Better BibTeX plugin for Zotero to use citekey functionality')
-        return
-    
-    # Check if citekey is empty (fallback case)
-    if not citekey:
-        wf.warn_empty('Better BibTeX not installed', 
-                      'Install the Better BibTeX plugin for Zotero to use citekey functionality')
-        return
-    
-    from workflow.util import run_trigger
-    import subprocess
-    
-    # Clear and set clipboard in one atomic operation to avoid race conditions
-    import pasteboard as pb
-    pb.clear()
-    
-    p = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
-    p.stdin.write(citekey.encode())
-    p.stdin.close()
- 
-    # Handle paste functionality
-    if paste:
-        run_trigger('paste')
-        
-
 def main(wf):
     """Run workflow."""
     import zothero
@@ -769,9 +710,6 @@ def main(wf):
         return do_config(args['<query>'])
 
     if args['copy']:
-        if args['<citekey>']:
-            return do_citekey(args['<citekey>'], args['--paste'])
-
         return do_copy(args['<style>'], entry_id, args['--bibliography'],
                        args['--paste'])
 

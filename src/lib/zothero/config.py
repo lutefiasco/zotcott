@@ -37,25 +37,80 @@ def read():
     return None, None
 
 
-def find_prefs():
-    """Find prefs.js by parsing profiles.ini."""
+def find_default_profile(profiles_ini, confdir):
+    """Return the absolute path of the default Zotero profile directory.
+
+    Resolves the active profile across the layouts Firefox/Zotero have used
+    over the years, in priority order:
+
+    1. An ``[InstallXXXX]`` section's ``Default=<path>`` (the modern,
+       per-install default; wins over everything else).
+    2. A ``[ProfileN]`` section flagged ``Default=1``.
+    3. A ``[ProfileN]`` section whose ``Name`` is ``default``.
+    4. The sole ``[ProfileN]`` section, if there's exactly one.
+
+    Returns ``None`` (rather than raising) if nothing can be resolved or the
+    file is missing/unreadable.
+
+    Args:
+        profiles_ini (str): Path to ``profiles.ini``.
+        confdir (str): Zotero config dir; base for ``IsRelative`` paths.
+
+    Returns:
+        unicode or None: Absolute path to the profile directory, or ``None``.
+    """
     conf = ConfigParser()
     try:
-        conf.read(PROFILES)
+        if not conf.read(profiles_ini):  # file missing / unreadable
+            return None
     except Exception as err:
         log.error('reading profiles.ini: %s', err)
         return None
 
+    def resolve(path, is_relative):
+        if is_relative:
+            path = os.path.join(confdir, path)
+        return unicodify(path)
+
+    profiles = [s for s in conf.sections() if s.lower().startswith('profile')]
+
+    # 1. [InstallXXXX] Default=<path> (always relative to confdir)
     for section in conf.sections():
+        if section.lower().startswith('install') and \
+                conf.has_option(section, 'Default'):
+            return resolve(conf.get(section, 'Default'), True)
+
+    # 2. A profile explicitly flagged Default=1
+    for section in profiles:
+        if conf.has_option(section, 'Default') and \
+                conf.get(section, 'Default').strip() in ('1', 'true', 'True'):
+            return resolve(conf.get(section, 'Path'),
+                           conf.getboolean(section, 'IsRelative', fallback=True))
+
+    # 3. A profile named "default"
+    for section in profiles:
         if conf.has_option(section, 'Name') and \
                 conf.get(section, 'Name') == 'default':
-            path = conf.get(section, 'Path')
-            if conf.getboolean(section, 'IsRelative'):
-                path = os.path.join(CONFDIR, path)
+            return resolve(conf.get(section, 'Path'),
+                           conf.getboolean(section, 'IsRelative', fallback=True))
 
-            return unicodify(os.path.join(path, 'prefs.js'))
+    # 4. The only profile, whatever it's called
+    if len(profiles) == 1:
+        section = profiles[0]
+        return resolve(conf.get(section, 'Path'),
+                       conf.getboolean(section, 'IsRelative', fallback=True))
 
     return None
+
+
+def find_prefs():
+    """Find prefs.js by parsing profiles.ini."""
+    profile_dir = find_default_profile(PROFILES, CONFDIR)
+    if not profile_dir:
+        log.error('could not locate default Zotero profile in %s', PROFILES)
+        return None
+
+    return unicodify(os.path.join(profile_dir, 'prefs.js'))
 
 
 def parse_prefs(path):

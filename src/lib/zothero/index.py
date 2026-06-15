@@ -16,7 +16,6 @@ from datetime import datetime
 import logging
 import os
 import sqlite3
-import struct
 from urllib.parse import urlparse
 
 from .util import dt2sqlite, timed, time_since, shortpath
@@ -24,16 +23,17 @@ from .zotero import Entry
 
 # Version of the database schema/data format.
 # Increment this every time the schema or JSON format changes to
-# invalidate the existing cache.
-DB_VERSION = 8
+# invalidate the existing cache. (9: FTS3 -> FTS5 + dropped citekey field.)
+DB_VERSION = 9
 
 # SQL schema for the search database. The Entry is also stored in the
 # database as JSON for speed (it takes 7 SQL queries to retrieve an
-# Entry from the Zotero database).
+# Entry from the Zotero database). `id` is UNINDEXED: retrievable but not
+# tokenised/matched. `all` is quoted because it's a SQL keyword.
 INDEX_SCHEMA = """
-CREATE VIRTUAL TABLE search USING fts3(
-    `id`, `title`, `year`, `creators`, `authors`, `editors`,
-    `tags`, `collections`, `attachments`, `notes`, `abstract`, `all`
+CREATE VIRTUAL TABLE search USING fts5(
+    id UNINDEXED, title, year, creators, authors, editors,
+    tags, collections, attachments, notes, abstract, "all"
 );
 
 CREATE TABLE modified (
@@ -54,12 +54,19 @@ CREATE TABLE dbinfo (
 
 log = logging.getLogger(__name__)
 
+# BM25 column weights, one per `search` column in declaration order:
+# id (unindexed), title, year, creators, authors, editors, tags,
+# collections, attachments, notes, abstract, all. Higher = more important;
+# `all` is kept low so it doesn't pollute results. fts5's bm25() returns a
+# negative score (more negative = better match), so order ascending.
 SEARCH_SQL = """
-SELECT search.id AS id, json, rank(matchinfo(search)) AS score
+SELECT search.id AS id, json,
+       bm25(search, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.4, 0.3, 0.3, 0.1)
+           AS score
 FROM search
 LEFT JOIN data ON search.id = data.id
 WHERE search MATCH ?
-ORDER BY score DESC
+ORDER BY score ASC
 LIMIT 100
 """
 
@@ -76,47 +83,9 @@ PRAGMA INTEGRITY_CHECK;
 COLUMNS = ('title', 'year', 'creators', 'authors', 'editors', 'tags',
            'collections', 'attachments', 'notes', 'abstract', 'all')
 
-# Search weightings for columns. The first column (key) is ignored (0.0)
-# collections, attachments, notes, abstract and all have lower weightings.
-# "all" is particularly low-ranked to avoid polluting results
-WEIGHTINGS = (0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.4, 0.3, 0.3, 0.1)
-
 
 class InitialiseDB(Exception):
     """Raised if database needs initialising."""
-
-
-def make_rank_func(weights):
-        """Search ranking function.
-
-        Use floats (1.0 not 1) for more accurate results. Use 0 to ignore a
-        column.
-
-        Adapted from <http://goo.gl/4QXj25> and <http://goo.gl/fWg25i>
-
-        :param weights: list or tuple of the relative ranking per column.
-        :type weights: :class:`tuple` OR :class:`list`
-        :returns: a function to rank SQLITE FTS results
-        :rtype: :class:`function`
-
-        """
-        def rank(matchinfo):
-            """Rank function for SQLite.
-
-            `matchinfo` is defined as returning 32-bit unsigned integers in
-            machine byte order (see http://www.sqlite.org/fts3.html#matchinfo)
-            and `struct` defaults to machine byte order.
-
-            """
-            bufsize = len(matchinfo)  # Length in bytes.
-            matchinfo = [struct.unpack(b'I', matchinfo[i:i + 4])[0]
-                         for i in range(0, bufsize, 4)]
-            it = iter(matchinfo[2:])
-            return sum(x[0] * w / x[1]
-                       for x, w in zip(zip(it, it, it), weights)
-                       if x[1])
-
-        return rank
 
 
 class Index(object):
@@ -151,7 +120,6 @@ class Index(object):
                     c.execute(sql, (str(DB_VERSION),))
 
             log.debug('[index] opened %r', shortpath(self.dbpath))
-            conn.create_function('rank', 1, make_rank_func(WEIGHTINGS))
             self._conn = conn
 
         return self._conn

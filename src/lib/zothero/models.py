@@ -12,6 +12,7 @@ from __future__ import print_function, absolute_import
 
 import json
 import logging
+import os
 
 from .util import json_serialise, utf8encode
 
@@ -83,7 +84,6 @@ class Entry(AttrDict):
         attachments (list): Sequence of `Attachment` objects.
         notes (list): Plaintext (Unicode) Entry notes.
         abstract (unicode): Entry abstract.
-        citekey (unicode or None): Better Bibtex citekey.
 
     """
 
@@ -218,6 +218,20 @@ class Attachment(AttrDict):
 
         """
         super(Attachment, self).__init__(*args, **kwargs)
+
+    @property
+    def exists(self):
+        """Whether this attachment's file is present on disk *right now*.
+
+        Checked at display time, not index time, because linked files in
+        cloud storage (e.g. Box) go online/offline and orphaned absolute
+        paths from a previous machine never resolve. URL-only attachments
+        have no path and are reported ``False``.
+
+        Returns:
+            bool: ``True`` if ``path`` is set and the file exists.
+        """
+        return bool(self.get('path')) and os.path.exists(self['path'])
 
 
 class Collection(AttrDict):
