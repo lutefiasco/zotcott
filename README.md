@@ -178,7 +178,6 @@ Development notes
 - `src/lib/cite/citeproc-bundle.js` is upstream `citeproc.js` (Juris-M, 1.4.61) verbatim plus a marked CommonJS export footer at the bottom — re-apply the footer if you upgrade the bundle.
 - The JXA fallback (`src/lib/cite/cite`) still embeds the old pre-CSL-1.0.2 engine. It is exercised only when Node is missing, and will error (visibly) on styles declaring `page-range-format="chicago-16"`. Upgrading or removing it is an open question.
 - `experiments/` is an untracked sandbox; `experiments/repro-page-mangler.js` is a minimal reproduction of the page-range engine crash, useful for testing future engine upgrades (run it against any bundle and the four `page-range-format` values).
-- The original investigation and state notes live in `RESUME.md`.
 
 
 <a name="licence--thanks"></a>
