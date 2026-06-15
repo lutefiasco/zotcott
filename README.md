@@ -181,7 +181,7 @@ ZotHero was inspired by the now-defunct [ZotQuery][zotquery] by [@fractaledmind]
 Changelog
 ----------------
 
-- **Unreleased** (on `zotcott`, not yet built/installed): modernisation pass for Zotero 8/9 (current library is Zotero 9.0.4, schema 125).
+- 2026-06-15 **Zotcott 3.2.0**: modernisation pass for Zotero 8/9 (current library is Zotero 9.0.4, schema 125).
     - **Hardened attachment resolution.** Profile detection in `config.py` now resolves the active Zotero profile across all `profiles.ini` layouts (an `[Install…]` `Default=` path, a profile flagged `Default=1`, a profile named `default`, or the sole profile) instead of only matching `Name=default` — the old single-line failure mode silently dropped *every* linked attachment. Linked files missing from disk are now surfaced as "⚠ File not found" rather than failing silently on open (`Attachment.exists`).
     - **Removed the Better BibTeX / citekey subsystem.** Deleted `betterbibtex.py`, the `do_citekey` command, the `COPY_CITEKEY_MOD` search-result branch, and the per-load citekey lookup. The cite-in-place / autopaste path is untouched. (The Alfred-side "Copy Citekey" objects and the `COPY_CITEKEY_MOD` config variable are now inert; remove them via the Alfred workflow editor if desired.)
     - **Search index migrated FTS3 → FTS5.** Ranking now uses SQLite's built-in `bm25()` with per-column weights, replacing the hand-rolled `matchinfo`/`struct` rank function. The index schema version bumped (8 → 9), so the search cache rebuilds itself on first run.
