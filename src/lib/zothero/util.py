@@ -108,16 +108,14 @@ class HTMLText(HTMLParser):
         """
         self.data.append(unicodify(s))
 
-    # def __str__(self):
-    #     """Return text UTF-8 encoded."""
-    #     if isinstance(self, str):
-    #          return self
-        #return str(self)
-        #return str(self).encode('utf-8', 'replace')
-        #return unicode(self).encode('utf-8', 'replace')
+    def __str__(self):
+        """Return the accumulated text.
 
-    def __unicode__(self):
-        """Return text as Unicode."""
+        Defining this is what makes ``str(parser)`` (and therefore
+        ``strip_tags``) return the extracted text. Without it, ``str()``
+        fell back to the default object repr and note text was indexed as
+        garbage like ``<...HTMLText object at 0x...>``.
+        """
         return u''.join(self.data)
 
 
@@ -207,8 +205,9 @@ def asciify(s):
 
     """
     u = normalize('NFD', unicodify(s))
-    s = u.encode('us-ascii', 'ignore')
-    return unicodify(s)
+    # Drop non-ASCII, then decode back to str. (The old code returned the
+    # raw bytes object, which str()-ified to "b'...'" and mangled safename.)
+    return u.encode('ascii', 'ignore').decode('ascii')
 
 
 def parse_date(datestr):
@@ -248,8 +247,12 @@ def parse_date(datestr):
         except ValueError:
             return None
     
-    # Fall back to just year (YYYY)
-    return datestr[:4]
+    # Fall back to the leading year (YYYY) if the string starts with one,
+    # e.g. "2020" or "2020 2020". Otherwise return it unchanged rather than
+    # truncating a non-date to four meaningless characters ("invalid" -> "inva").
+    if datestr[:4].isdigit():
+        return datestr[:4]
+    return datestr
 
 
 def json_serialise(obj):

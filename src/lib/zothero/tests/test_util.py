@@ -39,7 +39,7 @@ def test_asciify():
     for s, x in data:
         r = asciify(s)
         assert r == x
-        assert isinstance(r, unicode)
+        assert isinstance(r, str)
 
 
 def test_safename():
@@ -52,7 +52,7 @@ def test_safename():
     for s, x in data:
         r = safename(s)
         assert r == x
-        assert isinstance(r, unicode)
+        assert isinstance(r, str)
 
 
 def test_parse_date():
