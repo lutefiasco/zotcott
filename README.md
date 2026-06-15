@@ -7,7 +7,7 @@ Zotcott
 =======
 First - an -enormous- thank you to Deanishe and @GiovanniCoppola for years of supporting an Alfred/Zotero workflow that I don't believe either of them used for very long.
 
-All of the code changes are AI, so if that's a deal breaker from you, know this upfront.
+All of the code changes are AI, so if that's a deal breaker for you, know this upfront.
 
 Also, the workflow now requires node. I used brew to install node.js, but those sorts of dependencies may not be appropriate to Alfred, so it's not gallery ready/free of additional user work.
 
