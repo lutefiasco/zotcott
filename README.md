@@ -182,6 +182,7 @@ ZotHero was inspired by the now-defunct [ZotQuery][zotquery] by [@fractaledmind]
 Changelog
 ----------------
 
+- 2026-06-15 **Zotcott 3.0.0**: version-line break — no functional change from 2.4.1. Renumbered to a major Zotcott line so the fork's versions can never collide with upstream ZotHero's (both had reached "2.4"). Inherited `ZotHero*.alfredworkflow` artifacts removed from `releases/`; only `Zotcott-*` builds are kept. Upstream ZotHero releases remain on [GitHub][zothero-releases] if ever needed.
 - 2026-06-12 **Zotcott 2.4.1**: citeproc-js upgraded to 1.4.61 — fixes engine crash (`page_mangler`) on entries with page ranges in modern Chicago styles, which upstream had masked by silently substituting APA; the silent fallback is removed and citation errors now surface.
 - 2026-06-12 **Zotcott 2.4**: forked from the ZotHero 2.4 release asset. Node citation backend (~4× faster than JXA); citation path no longer re-copies the Zotero database (~0.7s vs ~4.5–6s per copy overall); bundle ID `zotcott`, keywords `zcot`/`zcot:`/`zcotconf`; default style Chicago 18 (notes and bibliography); snippet trigger removed.
 - Upstream history: see [ZotHero releases][zothero-releases] (2.2: newer BetterBibtex support; 2.1; 2.0: Alfred 5).
