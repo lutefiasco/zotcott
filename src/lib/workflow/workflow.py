@@ -436,14 +436,6 @@ MATCH_ALL = 127
 
 
 ####################################################################
-# Used by `Workflow.check_update`
-####################################################################
-
-# Number of days to wait between checking for updates to the workflow
-DEFAULT_UPDATE_FREQUENCY = 1
-
-
-####################################################################
 # Keychain access errors
 ####################################################################
 
@@ -2096,13 +2088,6 @@ class Workflow(object):
             else:
                 self.logger.debug("---------- %s ----------", self.name)
 
-            # Run update check if configured for self-updates.
-            # This call has to go in the `run` try-except block, as it will
-            # initialise `self.settings`, which will raise an exception
-            # if `settings.json` isn't valid.
-            #if self._update_settings:
-            #    self.check_update()
-
             # Run workflow's entry function/method
             func(self)
 
@@ -2315,125 +2300,6 @@ class Workflow(object):
 
         return True
 
-    @property
-    def update_available(self):
-        """Whether an update is available.
-
-        .. versionadded:: 1.9
-
-        See :ref:`guide-updates` in the :ref:`user-manual` for detailed
-        information on how to enable your workflow to update itself.
-
-        :returns: ``True`` if an update is available, else ``False``
-
-        """
-        key = "__workflow_latest_version"
-        # Create a new workflow object to ensure standard serialiser
-        # is used (update.py is called without the user's settings)
-        status = Workflow().cached_data(key, max_age=0)
-
-        # self.logger.debug('update status: %r', status)
-        if not status or not status.get("available"):
-            return False
-
-        return status["available"]
-
-    @property
-    def prereleases(self):
-        """Whether workflow should update to pre-release versions.
-
-        .. versionadded:: 1.16
-
-        :returns: ``True`` if pre-releases are enabled with the :ref:`magic
-            argument <magic-arguments>` or the ``update_settings`` dict, else
-            ``False``.
-
-        """
-        if self._update_settings.get("prereleases"):
-            return True
-
-        return self.settings.get("__workflow_prereleases") or False
-
-    def check_update(self, force=False):
-        """Call update script if it's time to check for a new release.
-
-        .. versionadded:: 1.9
-
-        The update script will be run in the background, so it won't
-        interfere in the execution of your workflow.
-
-        See :ref:`guide-updates` in the :ref:`user-manual` for detailed
-        information on how to enable your workflow to update itself.
-
-        :param force: Force update check
-        :type force: ``Boolean``
-
-        """
-        key = "__workflow_latest_version"
-        frequency = self._update_settings.get("frequency", DEFAULT_UPDATE_FREQUENCY)
-
-        if not force and not self.settings.get("__workflow_autoupdate", True):
-            self.logger.debug("Auto update turned off by user")
-            return
-
-        # Check for new version if it's time
-        if force or not self.cached_data_fresh(key, frequency * 86400):
-            repo = self._update_settings["github_slug"]
-            # version = self._update_settings['version']
-            version = str(self.version)
-
-            from .background import run_in_background
-
-            # update.py is adjacent to this file
-            update_script = os.path.join(os.path.dirname(__file__), "update.py")
-
-            cmd = [sys.executable, update_script, "check", repo, version]
-            if self.prereleases:
-                cmd.append("--prereleases")
-
-            self.logger.info("checking for update ...")
-
-            run_in_background("__workflow_update_check", cmd)
-
-        else:
-            self.logger.debug("update check not due")
-
-    def start_update(self):
-        """Check for update and download and install new workflow file.
-
-        .. versionadded:: 1.9
-
-        See :ref:`guide-updates` in the :ref:`user-manual` for detailed
-        information on how to enable your workflow to update itself.
-
-        :returns: ``True`` if an update is available and will be
-            installed, else ``False``
-
-        """
-        from . import update
-
-        repo = self._update_settings["github_slug"]
-        # version = self._update_settings['version']
-        version = str(self.version)
-
-        if not update.check_update(repo, version, self.prereleases):
-            return False
-
-        from .background import run_in_background
-
-        # update.py is adjacent to this file
-        update_script = os.path.join(os.path.dirname(__file__), "update.py")
-
-        cmd = [sys.executable, update_script, "install", repo, version]
-
-        if self.prereleases:
-            cmd.append("--prereleases")
-
-        self.logger.debug("downloading update ...")
-        run_in_background("__workflow_update_install", cmd)
-
-        return True
-
     ####################################################################
     # Keychain password storage methods
     ####################################################################
@@ -2596,35 +2462,6 @@ class Workflow(object):
         self.magic_arguments["foldingon"] = fold_on
         self.magic_arguments["foldingoff"] = fold_off
         self.magic_arguments["foldingdefault"] = fold_default
-
-        # Updates
-        def update_on():
-            self.settings["__workflow_autoupdate"] = True
-            return "Auto update turned on"
-
-        def update_off():
-            self.settings["__workflow_autoupdate"] = False
-            return "Auto update turned off"
-
-        def prereleases_on():
-            self.settings["__workflow_prereleases"] = True
-            return "Prerelease updates turned on"
-
-        def prereleases_off():
-            self.settings["__workflow_prereleases"] = False
-            return "Prerelease updates turned off"
-
-        def do_update():
-            if self.start_update():
-                return "Downloading and installing update ..."
-            else:
-                return "No update available"
-
-        self.magic_arguments["autoupdate"] = update_on
-        self.magic_arguments["noautoupdate"] = update_off
-        self.magic_arguments["prereleases"] = prereleases_on
-        self.magic_arguments["noprereleases"] = prereleases_off
-        self.magic_arguments["update"] = do_update
 
         # Help
         def do_help():
