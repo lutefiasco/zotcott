@@ -2054,7 +2054,7 @@ python3 zh.py notify $flags</string>
 
 Search your Zotero database and copy citations.
 `zcotconf` to view and edit workflow configuration.
-More details [here](https://github.com/giovannicoppola/zothero)
+More details [here](https://github.com/lutefiasco/zotcott)
 
 ## Features
 --------
@@ -2800,6 +2800,6 @@ These are the workflow's default keywords in Alfred:
 	<key>version</key>
 	<string>3.2.0</string>
 	<key>webaddress</key>
-	<string>https://github.com/giovannicoppola/zothero/</string>
+	<string>https://github.com/lutefiasco/zotcott</string>
 </dict>
 </plist>
