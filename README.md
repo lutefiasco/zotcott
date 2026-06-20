@@ -23,7 +23,7 @@ Begin AI generated description:
 
 Local performance fork of [ZotHero][zothero] — an [Alfred][alfred] workflow for rapidly searching your Zotero database and copying citations.
 
-ZotHero is by Dean Jackson ([@deanishe](https://github.com/deanishe)), currently maintained by Giovanni Coppola ([@giovannicoppola](https://github.com/giovannicoppola)). Zotcott is a private fork with no upstream ambitions; it installs alongside a live ZotHero without touching it (separate bundle ID, separate keywords, separate caches).
+ZotHero is by Dean Jackson ([@deanishe](https://github.com/deanishe)), currently maintained by Giovanni Coppola ([@giovannicoppola](https://github.com/giovannicoppola)). Zotcott is a public fork with no upstream ambitions; it installs alongside a live ZotHero without touching it (separate bundle ID, separate keywords, separate caches).
 
 <!-- MarkdownTOC autolink="true" bracket="round" depth="3" autoanchor="true" -->
 
@@ -178,6 +178,7 @@ Development notes
 - `src/lib/cite/citeproc-bundle.js` is upstream `citeproc.js` (Juris-M, 1.4.61) verbatim plus a marked CommonJS export footer at the bottom — re-apply the footer if you upgrade the bundle.
 - The JXA fallback (`src/lib/cite/cite`) still embeds the old pre-CSL-1.0.2 engine. It is exercised only when Node is missing, and will error (visibly) on styles declaring `page-range-format="chicago-16"`. Upgrading or removing it is an open question.
 - `experiments/` is an untracked sandbox; `experiments/repro-page-mangler.js` is a minimal reproduction of the page-range engine crash, useful for testing future engine upgrades (run it against any bundle and the four `page-range-format` values).
+- **No self-updater.** The bundled Deanishe Alfred-Workflow auto-updater (`lib/workflow/update.py` and the `update_settings` hooks in `workflow.py`) was removed deliberately on 2026-06-15; distribution is manual — rebuild the `.alfredworkflow` zip and `open` it per machine. The only distribution follow-up still under consideration is possibly submitting to the [Alfred gallery][gallery], which would require resolving the Node dependency (see Requirements) before the workflow is gallery-ready.
 
 
 <a name="licence--thanks"></a>
@@ -213,6 +214,7 @@ Changelog
 [citeproc-js]: https://github.com/Juris-M/citeproc-js
 [conf-sheet]: https://www.alfredapp.com/help/workflows/advanced/variables/#environment
 [csl]: http://citationstyles.org
+[gallery]: https://alfred.app/
 [icon-source]: https://thenounproject.com/term/zorro/14540/
 [licence]: ./LICENCE
 [lowenstein]: https://thenounproject.com/danny_mustache
