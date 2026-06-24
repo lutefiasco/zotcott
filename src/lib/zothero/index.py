@@ -54,6 +54,44 @@ CREATE TABLE dbinfo (
 
 log = logging.getLogger(__name__)
 
+
+def sanitise_query(query, prefix=False):
+    """Turn raw user input into a safe FTS5 MATCH expression.
+
+    FTS5's MATCH operand is its own query language in which ``'`` (string
+    delimiter), ``"`` ``(`` ``)`` ``:`` ``-`` ``*`` ``^`` etc. are all
+    syntactically significant. Feeding raw user input -- e.g. ``O'Brien`` --
+    straight to MATCH raises ``fts5: syntax error``. We neutralise this by
+    splitting on whitespace and wrapping each token as a double-quoted FTS5
+    phrase (doubling any embedded ``"``), which makes every other character
+    literal text to be tokenised normally.
+
+    Args:
+        query (unicode): Raw search string from the user.
+        prefix (bool): If ``True``, make the final token a prefix ("starts
+            with") query, as ``"term"*``.
+
+    Returns:
+        unicode: A MATCH expression, or ``''`` if there is nothing to search
+            for (caller should treat that as "no results").
+    """
+    terms = []
+    tokens = query.split()
+    for i, tok in enumerate(tokens):
+        star = prefix and i == len(tokens) - 1
+        # Honour an explicit trailing wildcard the user typed.
+        if tok.endswith('*'):
+            tok = tok.rstrip('*')
+            star = True
+        if not tok:  # token was only '*' (or empty) -- nothing to quote
+            continue
+        phrase = u'"{}"'.format(tok.replace(u'"', u'""'))
+        if star:
+            phrase += u'*'
+        terms.append(phrase)
+
+    return u' '.join(terms)
+
 # BM25 column weights, one per `search` column in declaration order:
 # id (unindexed), title, year, creators, authors, editors, tags,
 # collections, attachments, notes, abstract, all. Higher = more important;
@@ -198,15 +236,20 @@ class Index(object):
 
         """
         entries = []
-        for row in self.conn.execute(SEARCH_SQL, (query,)):
+        match = sanitise_query(query)
+        if not match:  # nothing searchable (empty / punctuation-only input)
+            return entries
+
+        for row in self.conn.execute(SEARCH_SQL, (match,)):
             entries.append(Entry.from_json(row['json']))
 
         # If we didn't get many results, perform a second search using
-        # a wildcard
-        if len(entries) < 30 and not query.endswith('*'):
+        # a prefix ("starts with") query on the final term.
+        prefix_match = sanitise_query(query, prefix=True)
+        if len(entries) < 30 and prefix_match != match:
             seen = {e.id for e in entries}  # ignore any duplicates
 
-            for row in self.conn.execute(SEARCH_SQL, (query + '*',)):
+            for row in self.conn.execute(SEARCH_SQL, (prefix_match,)):
                 if row['id'] not in seen:
                     entries.append(Entry.from_json(row['json']))
 

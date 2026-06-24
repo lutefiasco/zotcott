@@ -68,6 +68,7 @@ def index(tmp_path):
     zot = _build_zot(tmp_path, [
         (1, 'AAAA1111', 'Medieval Manuscripts', 'A focused study.'),
         (2, 'BBBB2222', 'Roman History', 'Mentions manuscripts only in passing.'),
+        (3, 'CCCC3333', "O'Brien on Ireland", 'A study of (medieval) Irish law: part one.'),
     ])
     idx = Index(str(tmp_path / 'search.sqlite'))
     idx.update(zot)
@@ -90,6 +91,27 @@ def test_title_match_ranks_above_abstract_match(index):
     titles = [e.title for e in res]
     assert titles, 'expected results'
     assert titles[0] == 'Medieval Manuscripts'
+
+
+def test_search_with_apostrophe_does_not_crash(index):
+    """An apostrophe is FTS5's string delimiter; it must not reach MATCH raw."""
+    res = index.search("O'Brien")
+    assert any(e.title == "O'Brien on Ireland" for e in res)
+
+
+@pytest.mark.parametrize('query', [
+    "O'Brien",          # apostrophe -> FTS5 string delimiter
+    '(medieval)',       # parentheses -> FTS5 grouping
+    'law: part',        # colon -> FTS5 column filter
+    'medieval-irish',   # hyphen -> FTS5 NOT/negation
+    '"unbalanced',      # lone double quote
+    '*',                # bare wildcard
+    '',                 # empty
+])
+def test_search_special_characters_never_crash(index, query):
+    """No user input should raise an FTS5 syntax error."""
+    # Should return a list (possibly empty), never raise.
+    assert isinstance(index.search(query), list)
 
 
 def test_index_uses_fts5(index):
