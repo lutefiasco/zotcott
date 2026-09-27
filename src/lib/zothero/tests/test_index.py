@@ -107,6 +107,10 @@ def test_search_with_apostrophe_does_not_crash(index):
     '"unbalanced',      # lone double quote
     '*',                # bare wildcard
     '',                 # empty
+    'title:*',          # column filter with only a wildcard
+    'title:"',          # column filter with only a quote
+    'title: :',         # bare column then a lone colon
+    'abstract:',        # bare column, nothing after
 ])
 def test_search_special_characters_never_crash(index, query):
     """No user input should raise an FTS5 syntax error."""
@@ -120,3 +124,63 @@ def test_index_uses_fts5(index):
         "SELECT sql FROM sqlite_master WHERE name='search'").fetchone()
     assert row is not None
     assert 'fts5' in row[0].lower()
+
+
+# ---------------------------------------------------------------------------
+# Field-scoped search (`zcot:` → pick a field → `title:medieval`). Broken by
+# 3.2.1's sanitiser, which quoted `title:medieval` as the literal phrase
+# "title medieval" and so matched nothing, silently.
+
+def _titles(res):
+    return sorted(e.title for e in res)
+
+
+def test_field_search_restricts_to_column(index):
+    """`title:manuscripts` matches the title, not the abstract mention."""
+    assert _titles(index.search('title:manuscripts')) == ['Medieval Manuscripts']
+
+
+def test_field_search_other_column(index):
+    """`abstract:manuscripts` matches only the entry with it in the abstract."""
+    assert _titles(index.search('abstract:manuscripts')) == ['Roman History']
+
+
+def test_field_search_with_space_after_colon(index):
+    """`title: manuscripts` scopes the following term."""
+    assert _titles(index.search('title: manuscripts')) == ['Medieval Manuscripts']
+
+
+def test_field_search_prefix_fallback(index):
+    """The prefix retry keeps the column scope: `title:manu`."""
+    assert _titles(index.search('title:manu')) == ['Medieval Manuscripts']
+
+
+def test_field_search_case_insensitive_column(index):
+    assert _titles(index.search('Title:manuscripts')) == ['Medieval Manuscripts']
+
+
+def test_field_search_mixed_with_free_term(index):
+    """A scoped term and a free term are ANDed."""
+    assert _titles(index.search('abstract:study medieval')) == \
+        ["Medieval Manuscripts", "O'Brien on Ireland"]
+
+
+def test_field_search_bare_column_is_empty(index):
+    """`title:` alone (what the field picker inserts) searches nothing."""
+    assert index.search('title:') == []
+
+
+def test_unknown_prefix_stays_literal():
+    """A colon after a non-column word is ordinary text, as before."""
+    from zothero.index import sanitise_query
+    assert sanitise_query('law:part') == '"law:part"'
+
+
+def test_all_column_is_scopable():
+    from zothero.index import sanitise_query
+    assert sanitise_query('all:x') == '"all" : "x"'
+
+
+def test_search_none_query_is_empty(index):
+    """`zh search` with no argument passes None; it must not raise."""
+    assert index.search(None) == []

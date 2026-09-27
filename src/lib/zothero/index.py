@@ -64,7 +64,9 @@ def sanitise_query(query, prefix=False):
     straight to MATCH raises ``fts5: syntax error``. We neutralise this by
     splitting on whitespace and wrapping each token as a double-quoted FTS5
     phrase (doubling any embedded ``"``), which makes every other character
-    literal text to be tokenised normally.
+    literal text to be tokenised normally. A ``col:term`` token whose
+    ``col`` is one of `COLUMNS` becomes an FTS5 column filter, so the
+    workflow's field search keeps working.
 
     Args:
         query (unicode): Raw search string from the user.
@@ -77,8 +79,18 @@ def sanitise_query(query, prefix=False):
     """
     terms = []
     tokens = query.split()
+    column = None  # set by a bare ``col:`` token; scopes the next term
     for i, tok in enumerate(tokens):
         star = prefix and i == len(tokens) - 1
+        # Field-scoped search: ``title:medieval`` (or ``title: medieval``)
+        # becomes an FTS5 column filter. Only known column names count, so
+        # any other ``word:`` stays literal text.
+        head, sep, rest = tok.partition(u':')
+        if sep and head.lower() in COLUMNS:
+            if not rest:
+                column = head.lower()
+                continue
+            column, tok = head.lower(), rest
         # Honour an explicit trailing wildcard the user typed.
         if tok.endswith('*'):
             tok = tok.rstrip('*')
@@ -88,6 +100,9 @@ def sanitise_query(query, prefix=False):
         phrase = u'"{}"'.format(tok.replace(u'"', u'""'))
         if star:
             phrase += u'*'
+        if column:
+            phrase = u'"{}" : {}'.format(column, phrase)
+            column = None
         terms.append(phrase)
 
     return u' '.join(terms)
@@ -236,6 +251,7 @@ class Index(object):
 
         """
         entries = []
+        query = query or u''
         match = sanitise_query(query)
         if not match:  # nothing searchable (empty / punctuation-only input)
             return entries

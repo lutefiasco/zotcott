@@ -77,3 +77,25 @@ def test_no_betterbibtex_db_required(zot, tmp_path):
     assert not os.path.exists(str(tmp_path / 'better-bibtex.sqlite'))
     e = zot.entry('ABCD1234')  # must not raise
     assert e.title == 'Test Article'
+
+
+def test_modified_since_skips_orphaned_attachment_parent(zot):
+    """An attachment whose parent is gone must not crash an incremental update.
+
+    Upstream ZotHero 7b6bc78: ``entry(key)`` returns None for a missing or
+    deleted parent, and ``None["id"]`` raised TypeError.
+    """
+    import datetime
+    con = sqlite3.connect(zot.dbpath)
+    # Attachment 2 hangs off item 99, which does not exist.
+    con.execute("INSERT INTO items VALUES (2, '2030-01-01 12:00:00', 'ATTACH02', 1, 1)")
+    con.execute("INSERT INTO itemAttachments VALUES (2, 99, 'storage:a.pdf')")
+    # Attachment 4 hangs off item 3, which is in the trash.
+    con.execute("INSERT INTO items VALUES (3, '2020-01-01 12:00:00', 'DELETED3', 1, 1)")
+    con.execute("INSERT INTO deletedItems VALUES (3, '2021-01-01 12:00:00')")
+    con.execute("INSERT INTO items VALUES (4, '2030-01-01 12:00:00', 'ATTACH04', 1, 1)")
+    con.execute("INSERT INTO itemAttachments VALUES (4, 3, 'storage:b.pdf')")
+    con.commit()
+    con.close()
+    entries = list(zot.modified_since(datetime.datetime(2025, 1, 1)))
+    assert None not in entries
