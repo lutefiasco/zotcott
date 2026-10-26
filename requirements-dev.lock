@@ -1,0 +1,7 @@
+# .venv exact state, 2026-10-25 17:51 PDT. Regenerate: uv pip freeze --python .venv/bin/python
+iniconfig==2.3.0
+packaging==26.2
+pip==26.1.2
+pluggy==1.6.0
+pygments==2.20.0
+pytest==9.1.0
